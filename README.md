@@ -21,9 +21,10 @@ La identidad visual se construye sobre una paleta botella/papel/mostaza y una es
 - `src/views` — composición de pantallas
 - `src/composables` — obtención de datos, separada de la vista
 - `src/config` — navegación, marca, moneda e idioma
-- `src/stores` — estado persistente por sucursal (catálogo, inventario, compras, gastos, ventas, caja), usuarios y sesión
+- `src/stores` — estado persistente por sucursal (catálogo, inventario, compras, gastos, ventas, caja), usuarios, sesión, empresas y fichas de sucursal
 - `src/components/expenses`, `src/components/cash`, `src/components/reports` — piezas visuales de las pantallas financieras
 - `src/components/users`, `src/views/LoginView.vue`, `src/views/UsersView.vue` — acceso y administración de cuentas
+- `src/components/companies`, `src/components/branches` — directorio de empresas y fichas de sucursal
 
 ## Comandos
 
@@ -38,18 +39,25 @@ La moneda y el idioma se configuran en `src/config/platform.ts`.
 
 ## Datos
 
-El estado se guarda en `localStorage` con claves por sucursal (`:centro` / `:norte`). «Todas las sucursales» es una vista agregada de solo lectura. Todos los importes se guardan en USD y se convierten al mostrarlos o capturarlos (USD, COP y CRC). Las cuentas y la sesión activa viven en `estante.users.v1` y `estante.session.v1`.
+El estado se guarda en `localStorage` con claves por sucursal (`:centro` / `:norte`). «Todas las sucursales» es una vista agregada de solo lectura. Todos los importes se guardan en USD y se convierten al mostrarlos o capturarlos (USD, COP y CRC). Las cuentas y la sesión activa viven en `estante.users.v1` y `estante.session.v1`; las empresas en `estante.companies.v1` / `estante.company.v1` y las fichas de sucursal en `estante.branchProfiles.v1`.
 
 - **Gastos**: alta, edición, pago y baja, con folio `G-xxxx` y categorías.
 - **Caja**: sesiones con fondo inicial, arqueo y descuadre; los cobros y gastos pagados en efectivo se asocian por hora.
 - **Reportes**: filtro de periodo, ventas, gastos, utilidad, desgloses y exportación CSV.
 
+## Empresas y sucursales
+
+- **Empresas**: directorio de razones sociales con datos fiscales y de contacto, búsqueda y filtros. Solo una puede estar activa: aparece en la cabecera de toda la app. Cambiar de empresa no separa los datos: la información sigue dividida únicamente por sucursal. No se puede desactivar ni eliminar la empresa activa sin marcar otra primero, y siempre debe quedar una activa.
+- **Sucursales**: fichas editables de Centro y Norte (domicilio, responsable, horario, contacto, estado y nota), con sus prefijos de folio como referencia. Los identificadores `centro` y `norte` son fijos porque de ellos dependen los datos guardados, los folios y los permisos; por eso no se pueden crear ni borrar sucursales desde la pantalla. El estado es informativo.
+
+Ambas pantallas son de acceso exclusivo para superusuarios.
+
 ## Usuarios y permisos
 
 El acceso se simula en el navegador con una pantalla de login. Hay dos perfiles:
 
-- **Superusuario**: ve «Todas las sucursales», puede cambiar a Centro o Norte para operar y es el único que ve la pantalla **Usuarios**. Puede crear cuentas, editar permisos, activar/desactivar y eliminar usuarios. No se puede eliminar ni desactivar la propia cuenta, ni dejar al último superusuario activo fuera del sistema.
-- **Usuario sucursal**: ve solo las sucursales asignadas (una o varias). El selector de sucursal muestra únicamente esas opciones; el agregado «Todas» aparece solo si tiene ambas y siempre es de solo lectura. No puede administrar usuarios ni acceder a `#/usuarios`.
+- **Superusuario**: ve «Todas las sucursales», puede cambiar a Centro o Norte para operar y es el único que ve **Empresas**, **Sucursales** y **Usuarios**. Puede crear cuentas, editar permisos, activar/desactivar y eliminar usuarios. No se puede eliminar ni desactivar la propia cuenta, ni dejar al último superusuario activo fuera del sistema.
+- **Usuario sucursal**: ve solo las sucursales asignadas (una o varias). El selector de sucursal muestra únicamente esas opciones; el agregado «Todas» aparece solo si tiene ambas y siempre es de solo lectura. No puede administrar usuarios, empresas ni sucursales, y esas tres rutas muestran «Sin permiso».
 
 ### Cuentas de demostración
 

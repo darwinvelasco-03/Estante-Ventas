@@ -4,6 +4,8 @@ export interface NavItem {
   id: string
   label: string
   icon: IconName
+  /** Solo visible para superusuarios. */
+  adminOnly?: boolean
 }
 
 export interface NavGroup {
@@ -40,9 +42,9 @@ export const navGroups: NavGroup[] = [
   {
     label: 'Sistema',
     items: [
-      { id: 'empresas', label: 'Empresas', icon: 'companies' },
-      { id: 'sucursales', label: 'Sucursales', icon: 'branches' },
-      { id: 'usuarios', label: 'Usuarios', icon: 'users' },
+      { id: 'empresas', label: 'Empresas', icon: 'companies', adminOnly: true },
+      { id: 'sucursales', label: 'Sucursales', icon: 'branches', adminOnly: true },
+      { id: 'usuarios', label: 'Usuarios', icon: 'users', adminOnly: true },
       { id: 'configuracion', label: 'Configuración', icon: 'settings' },
     ],
   },

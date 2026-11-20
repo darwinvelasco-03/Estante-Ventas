@@ -10,7 +10,7 @@ const visibleGroups = computed(() =>
   navGroups
     .map((group) => ({
       ...group,
-      items: group.items.filter((item) => item.id !== 'usuarios' || canManageUsers.value),
+      items: group.items.filter((item) => !item.adminOnly || canManageUsers.value),
     }))
     .filter((group) => group.items.length > 0),
 )

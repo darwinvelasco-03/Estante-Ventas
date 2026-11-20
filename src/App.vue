@@ -19,6 +19,8 @@ import ExpensesView from '@/views/ExpensesView.vue'
 import CashView from '@/views/CashView.vue'
 import ReportsView from '@/views/ReportsView.vue'
 import UsersView from '@/views/UsersView.vue'
+import CompaniesView from '@/views/CompaniesView.vue'
+import BranchesView from '@/views/BranchesView.vue'
 
 /** El selector respeta los permisos del usuario que tiene la sesión abierta. */
 const branchOptions = allowedBranchLabels
@@ -51,6 +53,7 @@ onUnmounted(() => window.removeEventListener('hashchange', onHashChange))
 
 const currentItem = computed(() => allNavItems.find((item) => item.id === route.value))
 const section = computed(() => currentItem.value?.label ?? 'Sección no disponible')
+const restrictedRoute = computed(() => !!currentItem.value?.adminOnly)
 </script>
 
 <template>
@@ -78,13 +81,15 @@ const section = computed(() => currentItem.value?.label ?? 'Sección no disponib
     <ExpensesView v-else-if="route === 'gastos'" :branch="branchLabel" />
     <CashView v-else-if="route === 'caja'" :branch="branchLabel" />
     <ReportsView v-else-if="route === 'reportes'" :branch="branchLabel" />
+    <CompaniesView v-else-if="route === 'empresas' && canManageUsers" :branch="branchLabel" />
+    <BranchesView v-else-if="route === 'sucursales' && canManageUsers" :branch="branchLabel" />
     <UsersView v-else-if="route === 'usuarios' && canManageUsers" :branch="branchLabel" />
     <StatePanel
-      v-else-if="route === 'usuarios'"
+      v-else-if="restrictedRoute"
       icon="alert"
       tone="danger"
       title="Sin permiso"
-      message="Solo un superusuario puede administrar las cuentas y sus permisos."
+      message="Solo un superusuario puede administrar empresas, sucursales y cuentas de acceso."
     />
     <StatePanel
       v-else

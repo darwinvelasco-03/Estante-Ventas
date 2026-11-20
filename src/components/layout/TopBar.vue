@@ -3,6 +3,7 @@ import { ref } from 'vue'
 
 import AppIcon from '@/components/ui/AppIcon.vue'
 import CurrencySelect from '@/components/ui/CurrencySelect.vue'
+import { activeCompany } from '@/stores/companies'
 import GlobalSearch from './GlobalSearch.vue'
 
 defineProps<{ branch: string; section: string }>()
@@ -27,7 +28,9 @@ const mobileSearchOpen = ref(false)
       </button>
 
       <div class="min-w-0">
-        <p class="truncate text-xs text-ink-soft">{{ branch }}</p>
+        <p class="truncate text-xs text-ink-soft">
+          {{ activeCompany?.tradeName ?? 'Sin empresa activa' }} · {{ branch }}
+        </p>
         <h1 class="truncate font-display text-base font-semibold text-ink">{{ section }}</h1>
       </div>
 
