@@ -58,7 +58,7 @@ Ambas pantallas son de acceso exclusivo para superusuarios.
 El acceso se simula en el navegador con una pantalla de login. Hay dos perfiles:
 
 - **Superusuario**: ve «Todas las sucursales», puede cambiar a Centro o Norte para operar y es el único que ve **Empresas**, **Sucursales** y **Usuarios**. Puede crear cuentas, editar permisos, activar/desactivar y eliminar usuarios. No se puede eliminar ni desactivar la propia cuenta, ni dejar al último superusuario activo fuera del sistema.
-- **Usuario sucursal**: ve solo las sucursales asignadas (una o varias). El selector de sucursal muestra únicamente esas opciones; el agregado «Todas» aparece solo si tiene ambas y siempre es de solo lectura. El dashboard saluda con su nombre y la vista **Mi sucursal** muestra la ficha de sus sucursales (solo lectura) con accesos directos a Vender, Caja, Inventario y Reportes. No puede administrar usuarios, empresas ni sucursales, y esas tres rutas muestran «Sin permiso».
+- **Usuario sucursal**: ve solo las sucursales asignadas (una o varias). El selector de sucursal muestra únicamente esas opciones: con una sola sucursal aparece como etiqueta fija, sin control de cambio; con dos permite cambiar entre ellas y muestra también el agregado «Todas», siempre de solo lectura. El dashboard saluda con su nombre y la vista **Mi sucursal** muestra la ficha de sus sucursales (solo lectura) con accesos directos a Vender, Caja, Inventario y Reportes. No puede administrar usuarios, empresas ni sucursales, y esas tres rutas muestran «Sin permiso».
 
 ### Cuentas de demostración
 

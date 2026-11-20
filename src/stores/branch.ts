@@ -17,6 +17,10 @@ function load(): BranchId {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY)
     if (isBranchId(raw) && canUseBranch(raw)) return raw
+    const fallback = firstAllowed()
+    // Solo reescribe si había una preferencia inválida; sin clave no se crea ninguna.
+    if (raw) window.localStorage.setItem(STORAGE_KEY, fallback)
+    return fallback
   } catch {
     // Preferencia inicial si el almacenamiento no está disponible.
   }

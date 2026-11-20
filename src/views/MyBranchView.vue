@@ -21,6 +21,12 @@ const profiles = computed(() =>
 )
 
 const firstName = computed(() => currentUser.value?.name.trim().split(/\s+/)[0] ?? 'Equipo')
+
+const scopeNote = computed(() =>
+  assigned.value.length > 1
+    ? 'Cambia la sucursal activa desde aquí o desde el selector lateral; las ventas, gastos y movimientos que registres se guardan únicamente en la sucursal activa. «Todas las sucursales» es un agregado y no permite escribir.'
+    : 'Tu cuenta tiene una sola sucursal asignada, así que no hay cambio disponible; las ventas, gastos y movimientos que registres se guardan únicamente ahí.',
+)
 </script>
 
 <template>
@@ -53,9 +59,7 @@ const firstName = computed(() => currentUser.value?.name.trim().split(/\s+/)[0] 
         <AppIcon name="alert" :size="14" class="mt-px shrink-0 text-mustard" />
         <p class="text-xs leading-relaxed text-ink-soft">
           Esta ficha es de solo lectura: los datos los administra el superusuario en Sucursales.
-          Cambia la sucursal activa desde aquí o desde el selector lateral; las ventas, gastos y
-          movimientos que registres se guardan únicamente en la sucursal activa. «Todas las
-          sucursales» es un agregado y no permite escribir.
+          {{ scopeNote }}
         </p>
       </div>
 

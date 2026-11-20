@@ -3,6 +3,7 @@ import { computed } from 'vue'
 
 import AppIcon from '@/components/ui/AppIcon.vue'
 import { navGroups } from '@/config/navigation'
+import BranchSwitcher from './BranchSwitcher.vue'
 import { platform } from '@/config/platform'
 import { canManageUsers, currentUser, logout } from '@/stores/users'
 
@@ -69,27 +70,7 @@ const emit = defineEmits<{
       </button>
     </div>
 
-    <div class="shrink-0 px-3 py-4">
-      <label class="sr-only" for="branch-select">Sucursal activa</label>
-      <div class="relative block md:hidden lg:block">
-        <select
-          id="branch-select"
-          :value="branch"
-          class="w-full appearance-none rounded-sm border border-white/15 bg-ink-deep py-2 pr-8 pl-3 text-sm text-surface focus-visible:outline-mint"
-          @change="emit('update:branch', ($event.target as HTMLSelectElement).value)"
-        >
-          <option v-for="option in branches" :key="option" :value="option">{{ option }}</option>
-        </select>
-        <AppIcon name="chevron" :size="14" class="pointer-events-none absolute top-2.5 right-2 text-mint" />
-      </div>
-      <button
-        type="button"
-        class="hidden size-10 items-center justify-center rounded-sm border border-white/15 bg-ink-deep text-mint md:flex lg:hidden"
-        :aria-label="`Sucursal activa: ${branch}. Cambiar sucursal`"
-      >
-        <AppIcon name="branches" :size="18" />
-      </button>
-    </div>
+    <BranchSwitcher :branch="branch" :branches="branches" @change="emit('update:branch', $event)" />
 
     <nav class="min-h-0 flex-1 overflow-y-auto px-3 pb-4">
       <div v-for="group in visibleGroups" :key="group.label" class="mb-5 last:mb-0">
