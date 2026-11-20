@@ -21,6 +21,7 @@ import ReportsView from '@/views/ReportsView.vue'
 import UsersView from '@/views/UsersView.vue'
 import CompaniesView from '@/views/CompaniesView.vue'
 import BranchesView from '@/views/BranchesView.vue'
+import MyBranchView from '@/views/MyBranchView.vue'
 
 /** El selector respeta los permisos del usuario que tiene la sesión abierta. */
 const branchOptions = allowedBranchLabels
@@ -71,6 +72,7 @@ const restrictedRoute = computed(() => !!currentItem.value?.adminOnly)
     @update:branch="setBranchByLabel"
   >
     <DashboardView v-if="route === 'dashboard'" :branch="branchLabel" />
+    <MyBranchView v-else-if="route === 'mi-sucursal'" :branch="branchLabel" />
     <PosView v-else-if="route === 'pos'" :branch="branchLabel" />
     <ProductsView v-else-if="route === 'productos'" :branch="branchLabel" />
     <InventoryView v-else-if="route === 'inventario'" :branch="branchLabel" />

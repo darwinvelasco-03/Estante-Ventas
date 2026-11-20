@@ -18,6 +18,7 @@ export const navGroups: NavGroup[] = [
     label: 'Operación',
     items: [
       { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
+      { id: 'mi-sucursal', label: 'Mi sucursal', icon: 'branches' },
       { id: 'pos', label: 'Punto de venta', icon: 'pos' },
       { id: 'productos', label: 'Productos', icon: 'products' },
       { id: 'inventario', label: 'Inventario', icon: 'inventory' },

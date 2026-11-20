@@ -1,12 +1,35 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+
 import AppIcon from '@/components/ui/AppIcon.vue'
 import type { IconName } from '@/types/icons'
 
-const actions: { label: string; detail: string; icon: IconName; href: string }[] = [
-  { label: 'Cerrar caja', detail: 'Turno de mañana', icon: 'cash', href: '#/caja' },
-  { label: 'Ajustar stock', detail: 'Corregir existencias', icon: 'inventory', href: '#/inventario' },
-  { label: 'Ver reportes', detail: 'Ventas de la semana', icon: 'reports', href: '#/reportes' },
-]
+interface QuickAction {
+  label: string
+  detail: string
+  icon: IconName
+  href: string
+}
+
+const props = withDefaults(defineProps<{ branchLabel: string; readOnly?: boolean }>(), {
+  readOnly: false,
+})
+
+/** En el agregado no se puede escribir: las acciones pasan a ser de consulta. */
+const actions = computed<QuickAction[]>(() => {
+  if (props.readOnly) {
+    return [
+      { label: 'Consultar caja', detail: 'Agregado · solo lectura', icon: 'cash', href: '#/caja' },
+      { label: 'Consultar stock', detail: 'Agregado · solo lectura', icon: 'inventory', href: '#/inventario' },
+      { label: 'Ver reportes', detail: 'Agregado · solo lectura', icon: 'reports', href: '#/reportes' },
+    ]
+  }
+  return [
+    { label: 'Cerrar caja', detail: `Turno de hoy · ${props.branchLabel}`, icon: 'cash', href: '#/caja' },
+    { label: 'Ajustar stock', detail: `Existencias de ${props.branchLabel}`, icon: 'inventory', href: '#/inventario' },
+    { label: 'Ver reportes', detail: `Ventas de la semana · ${props.branchLabel}`, icon: 'reports', href: '#/reportes' },
+  ]
+})
 </script>
 
 <template>
