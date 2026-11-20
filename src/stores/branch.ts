@@ -1,6 +1,7 @@
 import { computed, ref, watch } from 'vue'
 
 import { branchOptions, type BranchId, type BranchKey } from '@/config/branches'
+import { canUseBranch, canWriteBranch } from '@/stores/users'
 
 const STORAGE_KEY = 'estante.branch.v1'
 
@@ -8,14 +9,18 @@ function isBranchId(value: unknown): value is BranchId {
   return value === 'centro' || value === 'norte' || value === 'all'
 }
 
+function firstAllowed(): BranchId {
+  return branchOptions.find((option) => canUseBranch(option.id))?.id ?? 'centro'
+}
+
 function load(): BranchId {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY)
-    if (isBranchId(raw)) return raw
+    if (isBranchId(raw) && canUseBranch(raw)) return raw
   } catch {
     // Preferencia inicial si el almacenamiento no está disponible.
   }
-  return 'centro'
+  return firstAllowed()
 }
 
 const state = ref<BranchId>(load())
@@ -27,7 +32,7 @@ export const branchLabel = computed(
 )
 
 export function setBranch(id: BranchId) {
-  if (!isBranchId(id)) return
+  if (!isBranchId(id) || !canUseBranch(id)) return
   state.value = id
 }
 
@@ -37,9 +42,9 @@ export function setBranchByLabel(label: string) {
   if (option) setBranch(option.id)
 }
 
-/** Sucursal concreta donde se escriben los cambios. Nunca es la vista agregada. */
+/** Sucursal concreta donde se escriben los cambios. Nunca es la vista agregada ni una sucursal ajena. */
 export function writableBranch(): BranchKey | null {
-  return state.value === 'all' ? null : state.value
+  return canWriteBranch(state.value) ? (state.value as BranchKey) : null
 }
 
 watch(branchId, (id) => {

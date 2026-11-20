@@ -1,7 +1,28 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+
 import AppIcon from '@/components/ui/AppIcon.vue'
 import { navGroups } from '@/config/navigation'
 import { platform } from '@/config/platform'
+import { canManageUsers, currentUser, logout } from '@/stores/users'
+
+const visibleGroups = computed(() =>
+  navGroups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => item.id !== 'usuarios' || canManageUsers.value),
+    }))
+    .filter((group) => group.items.length > 0),
+)
+
+const initials = computed(() => {
+  const parts = (currentUser.value?.name ?? '').split(/\s+/).filter(Boolean).slice(0, 2)
+  return parts.map((part) => part[0]?.toUpperCase() ?? '').join('') || 'EU'
+})
+
+const roleLabel = computed(() =>
+  currentUser.value?.role === 'superuser' ? 'Superusuario' : 'Usuario sucursal',
+)
 
 defineProps<{
   open: boolean
@@ -71,7 +92,7 @@ const emit = defineEmits<{
     </div>
 
     <nav class="min-h-0 flex-1 overflow-y-auto px-3 pb-4">
-      <div v-for="group in navGroups" :key="group.label" class="mb-5 last:mb-0">
+      <div v-for="group in visibleGroups" :key="group.label" class="mb-5 last:mb-0">
         <p class="mb-2 block px-3 text-xs font-medium tracking-wide text-[#8FB0A3] md:hidden lg:block">
           {{ group.label }}
         </p>
@@ -104,16 +125,19 @@ const emit = defineEmits<{
           class="flex size-9 shrink-0 items-center justify-center rounded-full bg-mint/15 font-display text-xs font-bold text-mint"
           aria-hidden="true"
         >
-          MR
+          {{ initials }}
         </span>
         <span class="min-w-0 flex-1 block md:hidden lg:block">
-          <span class="block truncate text-sm font-medium text-surface">María Ramos</span>
-          <span class="block truncate text-xs text-[#8FB0A3]">Administradora</span>
+          <span class="block truncate text-sm font-medium text-surface">
+            {{ currentUser?.name ?? 'Invitado' }}
+          </span>
+          <span class="block truncate text-xs text-[#8FB0A3]">{{ roleLabel }}</span>
         </span>
         <button
           type="button"
           class="rounded-sm p-1.5 text-[#8FB0A3] hover:bg-white/10 hover:text-surface"
           aria-label="Cerrar sesión"
+          @click="logout"
         >
           <AppIcon name="logout" :size="17" />
         </button>

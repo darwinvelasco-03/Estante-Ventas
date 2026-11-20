@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 
 import AppShell from '@/components/layout/AppShell.vue'
 import StatePanel from '@/components/ui/StatePanel.vue'
 import { allNavItems } from '@/config/navigation'
-import { branchLabel, setBranchByLabel } from '@/stores/branch'
+import { branchId, branchLabel, setBranch, setBranchByLabel } from '@/stores/branch'
+import { allowedBranchIds, allowedBranchLabels, canManageUsers, currentUser } from '@/stores/users'
+import LoginView from '@/views/LoginView.vue'
 import DashboardView from '@/views/DashboardView.vue'
 import PosView from '@/views/PosView.vue'
 import ProductsView from '@/views/ProductsView.vue'
@@ -16,9 +18,22 @@ import PurchasesView from '@/views/PurchasesView.vue'
 import ExpensesView from '@/views/ExpensesView.vue'
 import CashView from '@/views/CashView.vue'
 import ReportsView from '@/views/ReportsView.vue'
+import UsersView from '@/views/UsersView.vue'
 
-const branchOptions = ['Sucursal Centro', 'Sucursal Norte', 'Todas las sucursales']
+/** El selector respeta los permisos del usuario que tiene la sesión abierta. */
+const branchOptions = allowedBranchLabels
 const menuOpen = ref(false)
+
+watch(
+  [currentUser, () => allowedBranchIds.value.join('|')],
+  () => {
+    if (!currentUser.value || allowedBranchIds.value.includes(branchId.value)) return
+    const fallback =
+      allowedBranchIds.value.find((id) => id !== 'all') ?? allowedBranchIds.value[0] ?? 'centro'
+    setBranch(fallback)
+  },
+  { immediate: true },
+)
 
 function readRoute() {
   return window.location.hash.replace(/^#\/?/, '') || 'dashboard'
@@ -39,7 +54,10 @@ const section = computed(() => currentItem.value?.label ?? 'Sección no disponib
 </script>
 
 <template>
+  <LoginView v-if="!currentUser" />
+
   <AppShell
+    v-else
     :branch="branchLabel"
     :branches="branchOptions"
     :section="section"
@@ -60,6 +78,14 @@ const section = computed(() => currentItem.value?.label ?? 'Sección no disponib
     <ExpensesView v-else-if="route === 'gastos'" :branch="branchLabel" />
     <CashView v-else-if="route === 'caja'" :branch="branchLabel" />
     <ReportsView v-else-if="route === 'reportes'" :branch="branchLabel" />
+    <UsersView v-else-if="route === 'usuarios' && canManageUsers" :branch="branchLabel" />
+    <StatePanel
+      v-else-if="route === 'usuarios'"
+      icon="alert"
+      tone="danger"
+      title="Sin permiso"
+      message="Solo un superusuario puede administrar las cuentas y sus permisos."
+    />
     <StatePanel
       v-else
       icon="clock"
