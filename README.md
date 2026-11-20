@@ -72,3 +72,9 @@ El acceso se simula en el navegador con una pantalla de login. Hay dos perfiles:
 > **Aviso:** es una demo local. Las contraseñas se guardan en `localStorage` sin cifrar y no protegen información real. No reutilices contraseñas propias; para un entorno de producción hace falta autenticación en servidor, contraseñas hasheadas y control de acceso desde el backend.
 
 Para reiniciar los datos de ejemplo y cerrar la sesión, borra las claves `estante.*` de `localStorage` y recarga la página.
+
+## Publicación
+
+La versión pública está en **https://darwinvelasco-03.github.io/Estante-Ventas/**. El flujo `.github/workflows/deploy.yml` compila con `npm ci` + `npm run build` y publica `dist` en GitHub Pages en cada push a `master` (o manualmente desde *Actions → Deploy a GitHub Pages → Run workflow*). El build usa rutas relativas (`base: './'`) para funcionar bajo el subdirectorio del proyecto.
+
+La aplicación es estática y sigue siendo una demo: el estado vive en el `localStorage` de cada navegador, así que los datos no se sincronizan entre dispositivos y el servicio no necesita que la máquina de desarrollo esté encendida.

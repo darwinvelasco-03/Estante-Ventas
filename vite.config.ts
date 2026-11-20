@@ -7,6 +7,8 @@ import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
 export default defineConfig({
+  // Rutas relativas para que el build funcione también en /Estante-Ventas/ de GitHub Pages.
+  base: './',
   plugins: [
     vue(),
     tailwindcss(),
