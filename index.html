@@ -1,107 +1,19 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
+    <link rel="icon" href="./favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="robots" content="noindex" />
-    <title>Estante · En mantenimiento</title>
-    <style>
-      :root {
-        color-scheme: light;
-        --ink: #123b34;
-        --paper: #f5f2ea;
-        --surface: #fffdf8;
-        --rail: #d8d2c4;
-        --mustard: #c9a227;
-        --muted: #5f6b66;
-      }
-      * { box-sizing: border-box; }
-      body {
-        margin: 0;
-        min-height: 100vh;
-        display: grid;
-        place-items: center;
-        padding: 1.5rem;
-        background: var(--paper);
-        color: var(--ink);
-        font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
-      }
-      main {
-        width: min(100%, 30rem);
-        background: var(--surface);
-        border: 1px solid var(--rail);
-        border-radius: 0.35rem;
-        padding: 2.5rem 2rem;
-        text-align: center;
-        box-shadow: 0 24px 60px -40px rgba(18, 59, 52, 0.55);
-      }
-      .mark {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 3.25rem;
-        height: 3.25rem;
-        border: 1px solid var(--rail);
-        border-radius: 50%;
-        color: var(--mustard);
-        margin-bottom: 1.25rem;
-      }
-      .brand {
-        font-size: 0.75rem;
-        font-weight: 700;
-        letter-spacing: 0.22em;
-        text-transform: uppercase;
-        color: var(--muted);
-      }
-      h1 {
-        margin: 0.6rem 0 0.75rem;
-        font-size: clamp(1.6rem, 5vw, 2.1rem);
-        line-height: 1.15;
-        letter-spacing: -0.02em;
-      }
-      p {
-        margin: 0 auto 1.6rem;
-        max-width: 24rem;
-        color: var(--muted);
-        font-size: 0.95rem;
-        line-height: 1.6;
-      }
-      button {
-        font: inherit;
-        font-weight: 600;
-        color: var(--surface);
-        background: var(--ink);
-        border: 1px solid var(--ink);
-        border-radius: 0.25rem;
-        padding: 0.7rem 1.4rem;
-        cursor: pointer;
-      }
-      button:hover { background: var(--muted); border-color: var(--muted); }
-      footer {
-        margin-top: 1.75rem;
-        padding-top: 1rem;
-        border-top: 1px solid var(--rail);
-        font-size: 0.75rem;
-        color: var(--muted);
-      }
-    </style>
+    <meta name="theme-color" content="#123B34" />
+    <meta
+      name="description"
+      content="Estante — gestión comercial para abarroteras y distribuidoras."
+    />
+    <title>Estante</title>
+    <script type="module" crossorigin src="./assets/index-gkC6j7is.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-b8SaBoQa.css">
   </head>
   <body>
-    <main>
-      <div class="mark" aria-hidden="true">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="9"></circle>
-          <path d="M12 7v5l3.5 2"></path>
-        </svg>
-      </div>
-      <p class="brand">Estante</p>
-      <h1>Volvemos en un momento</h1>
-      <p>
-        La página está en mantenimiento. Tus datos siguen guardados en este navegador y no se
-        pierden: cuando se reactive, encontrarás todo como lo dejaste.
-      </p>
-      <button type="button" onclick="location.reload()">Reintentar</button>
-      <footer>Estante · Gestión comercial</footer>
-    </main>
+    <div id="app"></div>
   </body>
 </html>
