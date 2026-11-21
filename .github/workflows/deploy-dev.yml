@@ -1,0 +1,65 @@
+name: Deploy a GitHub Pages (desarrollo)
+
+on:
+  push:
+    branches: [desarrollo]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# Mismo grupo que producción: ambos escriben en gh-pages y no deben solaparse.
+concurrency:
+  group: estante-pages
+  cancel-in-progress: false
+
+jobs:
+  deploy-dev:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Verificar tipos y compilar
+        run: npm run build
+
+      - name: Obtener rama gh-pages
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: gh-pages
+
+      - name: Publicar en /dev
+        env:
+          MAINTENANCE: ${{ vars.MAINTENANCE }}
+        run: |
+          mkdir -p gh-pages/dev
+          find gh-pages/dev -mindepth 1 -maxdepth 1 -exec rm -rf {} +
+          if [ "$MAINTENANCE" = "true" ]; then
+            echo "MAINTENANCE=true: publicando pantalla de mantenimiento en /dev"
+            cp -R maintenance/. gh-pages/dev/
+          else
+            cp -R dist/. gh-pages/dev/
+          fi
+
+      - name: Guardar y subir
+        run: |
+          cd gh-pages
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Sin cambios en desarrollo"
+          else
+            git commit -m "deploy: desarrollo ${GITHUB_SHA::7}"
+            git push origin HEAD:gh-pages
+          fi

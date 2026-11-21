@@ -89,9 +89,31 @@ El acceso se simula en el navegador con una pantalla de login. Hay dos perfiles:
 
 Para reiniciar los datos de ejemplo y cerrar la sesión, borra las claves `estante.*` de `localStorage` y recarga la página.
 
-## Publicación
+## Ambientes, ramas y publicación
 
-La versión pública está en **https://darwinvelasco-03.github.io/Estante-Ventas/**. El flujo `.github/workflows/deploy.yml` compila con `npm ci` + `npm run build` y publica `dist` en GitHub Pages en cada push a `master` (o manualmente desde *Actions → Deploy a GitHub Pages → Run workflow*). El build usa rutas relativas (`base: './'`) para funcionar bajo el subdirectorio del proyecto.
+| Rama | Ambiente | URL | Workflow |
+| --- | --- | --- | --- |
+| `desarrollo` | Pruebas / desarrollo | https://darwinvelasco-03.github.io/Estante-Ventas/dev/ | `.github/workflows/deploy-dev.yml` |
+| `master` | Producción | https://darwinvelasco-03.github.io/Estante-Ventas/ | `.github/workflows/deploy.yml` |
+
+Ambos workflows compilan con `npm ci` + `npm run build` y publican en la rama `gh-pages`: producción en la raíz y desarrollo en `/dev/`, sin borrarse entre sí. El build usa rutas relativas (`base: './'`), así que funciona igual en la raíz que en un subdirectorio. Para publicar basta con hacer push a la rama correspondiente; también puedes forzar un republicado desde *Actions → nombre del workflow → Run workflow*. El workflow de APK sigue disparándose solo con push a `master`.
+
+### Apagar y encender la página
+
+La variable de repositorio `MAINTENANCE` controla la web de producción:
+
+1. En GitHub entra en **Settings → Secrets and variables → Actions → pestaña Variables** y edita `MAINTENANCE`.
+2. Ponla en `true` y ejecuta *Actions → Deploy a GitHub Pages (producción) → Run workflow*. La raíz mostrará la pantalla de `maintenance/index.html`. El entorno `/dev/` sigue disponible.
+3. Para reactivarla, ponla en `false` y vuelve a ejecutar el mismo workflow. Regresa el build normal.
+
+No se borra nada: el código, los artefactos y el `localStorage` de cada navegador quedan intactos. Si quieres apagar también el acceso a `/dev/`, ejecuta *Run workflow* de desarrollo con la variable en `true` (usa la misma plantilla de mantenimiento).
+
+### Probar sin publicar
+
+```bash
+npm run dev                                        # desarrollo en http://localhost:5173
+npm run preview -- --host 127.0.0.1 --port 4173    # revisar el build tal como se publica
+```
 
 La aplicación es estática y sigue siendo una demo: el estado vive en el `localStorage` de cada navegador, así que los datos no se sincronizan entre dispositivos y el servicio no necesita que la máquina de desarrollo esté encendida.
 
