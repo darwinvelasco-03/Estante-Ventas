@@ -8,6 +8,7 @@ import { registerMovement } from '@/stores/inventory'
 import { findSupplier } from '@/stores/suppliers'
 import type { PaymentMethod } from '@/types/pos'
 import type { Purchase, PurchaseError, PurchaseInput, PurchaseLine, PurchaseStatus } from '@/types/purchase'
+import type { ReversalStamp } from '@/types/reversal'
 
 const STORAGE_KEY = 'estante.purchases.v1'
 
@@ -173,6 +174,11 @@ export function paidPurchasesFor(key: BranchKey): Purchase[] {
   return state.byBranch[key].filter((purchase) => !!purchase.paidAt)
 }
 
+/** Acceso por sucursal para construir la bitácora unificada de Movimientos. */
+export function purchasesFor(key: BranchKey): Purchase[] {
+  return state.byBranch[key]
+}
+
 function findIn(key: BranchKey, id: string | null | undefined) {
   if (!id) return null
   return state.byBranch[key].find((purchase) => purchase.id === id) ?? null
@@ -228,6 +234,7 @@ export function savePurchase(
 
   const existing = findIn(key, id)
   if (id && !existing) return { purchase: null, error: 'no-encontrado' }
+  if (existing?.reversal) return { purchase: null, error: 'anulado' }
   if (existing?.receivedAt) return { purchase: null, error: 'recibida' }
 
   const lines: PurchaseLine[] = []
@@ -284,6 +291,7 @@ export function markPurchasePaid(
   if (!key) return { purchase: null, error: 'no-encontrado' }
   const purchase = findIn(key, id)
   if (!purchase) return { purchase: null, error: 'no-encontrado' }
+  if (purchase.reversal) return { purchase: null, error: 'anulado' }
   if (purchase.paidAt) return { purchase: null, error: 'pagada' }
   purchase.paymentMethod = paymentMethod ?? purchase.paymentMethod
   purchase.paidAt = new Date().toISOString()
@@ -299,6 +307,7 @@ export function receivePurchase(
   if (!key) return { purchase: null, error: 'no-encontrado', receivedLines: 0, completed: false }
   const purchase = findIn(key, id)
   if (!purchase) return { purchase: null, error: 'no-encontrado', receivedLines: 0, completed: false }
+  if (purchase.reversal) return { purchase: null, error: 'anulado', receivedLines: 0, completed: false }
   if (purchase.receivedAt) return { purchase: null, error: 'recibida', receivedLines: 0, completed: false }
 
   const pending = new Map<string, number>()
@@ -338,8 +347,22 @@ export function removePurchase(id: string) {
   const key = writableBranch()
   if (!key) return false
   const index = state.byBranch[key].findIndex((purchase) => purchase.id === id)
-  if (index === -1) return false
+  if (index === -1 || state.byBranch[key][index]?.reversal) return false
   state.byBranch[key].splice(index, 1)
   persist(key)
   return true
+}
+
+/**
+ * Anula el pago de una orden sin borrarla ni quitarle `paidAt`: conserva su
+ * lugar en el periodo original y se compensa con un ajuste en la anulación.
+ */
+export function voidPurchasePayment(id: string, stamp: ReversalStamp): Purchase | null {
+  const key = writableBranch()
+  if (!key) return null
+  const purchase = findIn(key, id)
+  if (!purchase || purchase.reversal || !purchase.paidAt) return null
+  purchase.reversal = stamp
+  persist(key)
+  return purchase
 }

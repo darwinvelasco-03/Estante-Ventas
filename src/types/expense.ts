@@ -1,4 +1,5 @@
 import type { CurrencyCode } from '@/config/currency'
+import type { ReversalStamp } from '@/types/reversal'
 
 export const expenseCategories = [
   'Servicios',
@@ -32,6 +33,8 @@ export interface Expense {
   paidAt: string | null
   note: string
   createdAt: string
+  /** Presente cuando el pago fue anulado; el gasto conserva su historial. */
+  reversal?: ReversalStamp | null
 }
 
 export interface ExpenseInput {
@@ -46,4 +49,10 @@ export interface ExpenseInput {
   note: string
 }
 
-export type ExpenseError = 'concepto' | 'monto' | 'fecha' | 'no-encontrado' | 'pagado'
+export type ExpenseError =
+  | 'concepto'
+  | 'monto'
+  | 'fecha'
+  | 'no-encontrado'
+  | 'pagado'
+  | 'anulado'

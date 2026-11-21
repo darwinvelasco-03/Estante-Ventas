@@ -52,8 +52,16 @@ const differentCurrency = computed(
           <p class="mt-1 text-xs text-ink-soft">{{ date }}</p>
         </div>
         <StatusTag
-          :label="props.expense.status === 'pagado' ? 'Pagado' : 'Pendiente de pago'"
-          :tone="props.expense.status === 'pagado' ? 'ok' : 'warn'"
+          :label="
+            props.expense.reversal
+              ? 'Anulado'
+              : props.expense.status === 'pagado'
+                ? 'Pagado'
+                : 'Pendiente de pago'
+          "
+          :tone="
+            props.expense.reversal ? 'danger' : props.expense.status === 'pagado' ? 'ok' : 'warn'
+          "
         />
       </div>
 
@@ -94,9 +102,18 @@ const differentCurrency = computed(
         {{ props.expense.note }}
       </p>
 
+      <p
+        v-if="props.expense.reversal"
+        class="mt-3 rounded-sm border border-brick/30 bg-brick-soft px-3 py-2 text-xs leading-relaxed text-brick"
+      >
+        Pago anulado: {{ props.expense.reversal.reason }} ·
+        {{ formatVisitParts(props.expense.reversal.reversedAt).full }} ·
+        {{ props.expense.reversal.by }}
+      </p>
+
       <div v-if="!props.readonly" class="mt-5 flex flex-wrap gap-2">
         <button
-          v-if="props.expense.status === 'pendiente'"
+          v-if="props.expense.status === 'pendiente' && !props.expense.reversal"
           type="button"
           class="inline-flex items-center gap-1.5 rounded-sm bg-ink px-3 py-2 font-display text-sm font-semibold text-surface hover:bg-ink-soft"
           @click="emit('pay')"
@@ -105,7 +122,7 @@ const differentCurrency = computed(
           Marcar pagado
         </button>
         <button
-          v-if="props.expense.status === 'pendiente'"
+          v-if="props.expense.status === 'pendiente' && !props.expense.reversal"
           type="button"
           class="inline-flex items-center gap-1.5 rounded-sm border border-rail px-3 py-2 text-sm text-ink hover:border-ink"
           @click="emit('edit')"
@@ -113,6 +130,7 @@ const differentCurrency = computed(
           Editar gasto
         </button>
         <button
+          v-if="!props.expense.reversal"
           type="button"
           class="inline-flex items-center gap-1.5 rounded-sm border border-brick/40 px-3 py-2 text-sm text-brick hover:border-brick"
           @click="emit('remove')"

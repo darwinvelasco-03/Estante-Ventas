@@ -1,8 +1,9 @@
 import { computed, type ComputedRef, type Ref } from 'vue'
 
 import { platform } from '@/config/platform'
-import type { Expense, ExpenseCategory } from '@/types/expense'
+import type { Expense } from '@/types/expense'
 import { orderedTotal } from '@/stores/purchases'
+import type { ReversalAdjustment, ReversalCategory } from '@/types/reversal'
 import type { Purchase } from '@/types/purchase'
 import type { SaleRecord } from '@/types/sale'
 import type { ReportRange } from './useReportPeriod'
@@ -32,6 +33,8 @@ export interface ReportData {
   sales: SaleRecord[]
   expenses: Expense[]
   purchases: Purchase[]
+  /** Ajustes de anulaciones ocurridos en el periodo, ya descontados de los totales. */
+  adjustments: ReversalAdjustment[]
   salesTotal: number
   expensesTotal: number
   purchasesTotal: number
@@ -89,6 +92,7 @@ export function useReportData(
   expenses: Ref<Expense[]>,
   purchases: Ref<Purchase[]>,
   range: ComputedRef<ReportRange>,
+  adjustments?: Ref<ReversalAdjustment[]>,
 ): ComputedRef<ReportData> {
   return computed(() => {
     const start = range.value.start.getTime()
@@ -107,9 +111,21 @@ export function useReportData(
       (purchase): purchase is Purchase & { paidAt: string } => inRange(purchase.paidAt),
     )
 
-    const salesTotal = periodSales.reduce((sum, sale) => sum + sale.total, 0)
-    const expensesTotal = periodExpenses.reduce((sum, expense) => sum + expense.amount, 0)
-    const purchasesTotal = periodPurchases.reduce((sum, purchase) => sum + orderedTotal(purchase), 0)
+    // Los anulados conservan su fecha original; la compensación se contabiliza
+    // como ajuste negativo en el momento en que se anularon.
+    const periodAdjustments = (adjustments?.value ?? []).filter((item) => inRange(item.createdAt))
+    const adjustmentSum = (category: ReversalCategory) =>
+      periodAdjustments
+        .filter((item) => item.category === category)
+        .reduce((sum, item) => sum + item.amount, 0)
+
+    const salesTotal =
+      periodSales.reduce((sum, sale) => sum + sale.total, 0) - adjustmentSum('venta')
+    const expensesTotal =
+      periodExpenses.reduce((sum, expense) => sum + expense.amount, 0) - adjustmentSum('gasto')
+    const purchasesTotal =
+      periodPurchases.reduce((sum, purchase) => sum + orderedTotal(purchase), 0) -
+      adjustmentSum('compra')
     const profit = salesTotal - expensesTotal - purchasesTotal
 
     const days = buildDays(range.value.start, range.value.end)
@@ -126,10 +142,22 @@ export function useReportData(
       const day = byKey.get(dayKey(new Date(purchase.paidAt)))
       if (day) day.purchases += orderedTotal(purchase)
     }
+    for (const adjustment of periodAdjustments) {
+      const day = byKey.get(dayKey(new Date(adjustment.createdAt)))
+      if (!day) continue
+      if (adjustment.category === 'venta') day.sales -= adjustment.amount
+      else if (adjustment.category === 'gasto') day.expenses -= adjustment.amount
+      else day.purchases -= adjustment.amount
+    }
 
-    const categoryTotals = new Map<ExpenseCategory, number>()
+    const categoryTotals = new Map<string, number>()
     for (const expense of periodExpenses) {
       categoryTotals.set(expense.category, (categoryTotals.get(expense.category) ?? 0) + expense.amount)
+    }
+    for (const adjustment of periodAdjustments) {
+      if (adjustment.category !== 'gasto' || !adjustment.expenseCategory) continue
+      const category = adjustment.expenseCategory
+      categoryTotals.set(category, (categoryTotals.get(category) ?? 0) - adjustment.amount)
     }
     const categories = slices(
       [...categoryTotals].map(([label, value]) => ({ label, value })),
@@ -139,6 +167,11 @@ export function useReportData(
     const methodTotals = new Map<string, number>()
     for (const sale of periodSales) {
       methodTotals.set(sale.paymentMethod, (methodTotals.get(sale.paymentMethod) ?? 0) + sale.total)
+    }
+    for (const adjustment of periodAdjustments) {
+      if (adjustment.category !== 'venta' || !adjustment.paymentMethod) continue
+      const method = adjustment.paymentMethod
+      methodTotals.set(method, (methodTotals.get(method) ?? 0) - adjustment.amount)
     }
     const methods = slices(
       [...methodTotals].map(([id, value]) => ({
@@ -152,6 +185,11 @@ export function useReportData(
     for (const purchase of periodPurchases) {
       const label = purchase.supplierName || 'Sin proveedor'
       supplierTotals.set(label, (supplierTotals.get(label) ?? 0) + orderedTotal(purchase))
+    }
+    for (const adjustment of periodAdjustments) {
+      if (adjustment.category !== 'compra') continue
+      const label = adjustment.supplierName || 'Sin proveedor'
+      supplierTotals.set(label, (supplierTotals.get(label) ?? 0) - adjustment.amount)
     }
     const suppliers = slices(
       [...supplierTotals].map(([label, value]) => ({ label, value })),
@@ -181,6 +219,7 @@ export function useReportData(
       sales: periodSales,
       expenses: periodExpenses,
       purchases: periodPurchases,
+      adjustments: periodAdjustments,
       salesTotal,
       expensesTotal,
       purchasesTotal,

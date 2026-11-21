@@ -4,6 +4,7 @@ import type { BranchKey } from '@/config/branches'
 import type { CurrencyCode } from '@/config/currency'
 import { branchId, isAllBranches, writableBranch } from '@/stores/branch'
 import { findSupplier } from '@/stores/suppliers'
+import type { ReversalStamp } from '@/types/reversal'
 import type {
   Expense,
   ExpenseCategory,
@@ -255,6 +256,7 @@ export function saveExpense(
 
   const existing = findIn(key, id)
   if (id && !existing) return { expense: null, error: 'no-encontrado' }
+  if (existing?.reversal) return { expense: null, error: 'anulado' }
   if (existing?.status === 'pagado') return { expense: null, error: 'pagado' }
 
   const supplier = input.supplierId ? findSupplier(input.supplierId) : null
@@ -296,6 +298,7 @@ export function payExpense(
   if (!key) return { expense: null, error: 'no-encontrado' }
   const expense = findIn(key, id)
   if (!expense) return { expense: null, error: 'no-encontrado' }
+  if (expense.reversal) return { expense: null, error: 'anulado' }
   if (expense.status === 'pagado') return { expense: null, error: 'pagado' }
 
   expense.status = 'pagado'
@@ -309,8 +312,22 @@ export function removeExpense(id: string) {
   const key = writableBranch()
   if (!key) return false
   const index = state.byBranch[key].findIndex((expense) => expense.id === id)
-  if (index === -1) return false
+  if (index === -1 || state.byBranch[key][index]?.reversal) return false
   state.byBranch[key].splice(index, 1)
   persist(key)
   return true
+}
+
+/**
+ * Anula el pago de un gasto sin borrarlo ni cambiar su estado: el documento
+ * sigue contando en su periodo y el ajuste negativo compensa en la anulación.
+ */
+export function voidExpensePayment(id: string, stamp: ReversalStamp): Expense | null {
+  const key = writableBranch()
+  if (!key) return null
+  const expense = findIn(key, id)
+  if (!expense || expense.reversal || expense.status !== 'pagado') return null
+  expense.reversal = stamp
+  persist(key)
+  return expense
 }

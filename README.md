@@ -40,12 +40,27 @@ La moneda y el idioma se configuran en `src/config/platform.ts`.
 
 ## Datos
 
-El estado se guarda en `localStorage` con claves por sucursal (`:centro` / `:norte`). «Todas las sucursales» es una vista agregada de solo lectura. Todos los importes se guardan en USD y se convierten al mostrarlos o capturarlos (USD, COP y CRC). Las cuentas y la sesión activa viven en `estante.users.v1` y `estante.session.v1`; las empresas en `estante.companies.v1` y las fichas de sucursal en `estante.branchProfiles.v1`.
+El estado se guarda en `localStorage` con claves por sucursal (`:centro` / `:norte`). «Todas las sucursales» es una vista agregada de solo lectura. Todos los importes se guardan en USD y se convierten al mostrarlos o capturarlos (USD, COP y CRC). Las cuentas y la sesión activa viven en `estante.users.v1` y `estante.session.v1`; las empresas en `estante.companies.v1` y las fichas de sucursal en `estante.branchProfiles.v1`; los ajustes de anulación en `estante.reversals.v1:centro` / `:norte`.
 
-- **Compras**: órdenes con folio `OC-xxxx`, recepción parcial en Inventario, forma de pago (efectivo o tarjeta) y fecha de pago. Una orden se puede pagar al crearla o después con **Marcar como pagada**; las órdenes pagadas se contabilizan como egreso por el total pedido. Las órdenes antiguas sin fecha de pago se consideran no pagadas hasta que se marquen.
-- **Gastos**: alta, edición, pago y baja, con folio `G-xxxx` y categorías.
-- **Caja**: sesiones con fondo inicial, arqueo y descuadre; los cobros, gastos y compras pagados en efectivo se asocian por hora. El efectivo esperado es `fondo + ventas en efectivo − gastos en efectivo − compras en efectivo`.
-- **Reportes**: filtro de periodo, ventas, gastos, compras pagadas, utilidad, desgloses (incluido compras por proveedor) y exportación CSV. Solo cuentan los gastos y las órdenes marcados como pagados; la utilidad resta ambos egresos de los cobros.
+- **Compras**: órdenes con folio `OC-xxxx`, recepción parcial en Inventario, forma de pago (efectivo o tarjeta) y fecha de pago. Una orden se puede pagar al crearla o después con **Marcar como pagada**; las órdenes pagadas se contabilizan como egreso por el total pedido. Las órdenes antiguas sin fecha de pago se consideran no pagadas hasta que se marquen. Una orden anulada conserva su pago original y se compensa con un ajuste (ver **Movimientos**).
+- **Gastos**: alta, edición, pago y baja, con folio `G-xxxx` y categorías. Un gasto anulado conserva su estado pagado y se compensa con un ajuste (ver **Movimientos**).
+- **Caja**: sesiones con fondo inicial, arqueo y descuadre; los cobros, gastos y compras pagados en efectivo se asocian por hora. El efectivo esperado es `fondo + ventas en efectivo − gastos en efectivo − compras en efectivo`. Las anulaciones descuentan su importe en el turno abierto y aparecen como **Ajustes por anulación**.
+- **Reportes**: filtro de periodo, ventas, gastos, compras pagadas, utilidad, desgloses (incluido compras por proveedor) y exportación CSV. Solo cuentan los gastos y las órdenes marcados como pagados; la utilidad resta ambos egresos de los cobros. Las anulaciones descuentan el importe en la fecha en que ocurrieron y el CSV incluye renglones negativos (ver **Movimientos**).
+
+## Movimientos y anulaciones
+
+**Movimientos** (grupo **Finanzas**, icono de historial) reúne en una bitácora los cobros del Punto de venta, los movimientos de Inventario, las órdenes de compra pagadas y los gastos pagados. Permite buscar por folio, documento o detalle, filtrar por **Activos / Anulados** y por tipo, y consultar el detalle de cada registro. En «Todas las sucursales» se concatenan ambas tiendas y la vista es de solo lectura: el botón **Anular** no aparece.
+
+Cualquier usuario con escritura en la sucursal puede anular. La acción pide un motivo y sigue estas reglas:
+
+- **Nada se borra.** El documento original conserva su folio, fecha, estado pagado/cobrado e historial. Solo recibe una huella de anulación con fecha, motivo y autor, y se muestra como **Anulado / ANULADA** en su vista y en la bitácora.
+- **Venta:** se repone el stock con entradas de Inventario (`Reversión · Anulación <folio>`) y se registra un ajuste negativo por el total cobrado.
+- **Movimiento de inventario:** se crea un contra-movimiento invertido. Si no hay existencias para deshacer una entrada, el ajuste llega hasta el saldo disponible y la nota lo indica.
+- **Compra o gasto pagado:** se anula el pago sin quitar `paidAt` ni cambiar `status`. El documento sigue en su periodo original y no se puede volver a pagar, editar ni eliminar (devuelve el error `anulado`).
+- **Compensación fechada hoy:** el ajuste negativo se contabiliza en la sesión de Caja abierta de esa sucursal y en Reportes con la fecha de la anulación. Así no se reescriben cierres ni reportes ya emitidos. Caja lo muestra como **Ajustes por anulación**; Reportes lo descuenta de totales, días, métodos de pago, categorías y proveedores.
+- El CSV de Reportes incluye una fila por ajuste (`Anulación de venta/gasto/compra`) con importe negativo, además de la fila original.
+
+Las anulaciones de una sucursal no afectan a la otra. Para probar estados de carga y error: `?movimientos=cargando#/movimientos` y `?movimientos=error#/movimientos`.
 
 ## Empresas y sucursales
 

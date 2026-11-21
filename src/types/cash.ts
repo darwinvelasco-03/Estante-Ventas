@@ -1,6 +1,7 @@
 import type { BranchKey } from '@/config/branches'
 import type { Expense } from '@/types/expense'
 import type { Purchase } from '@/types/purchase'
+import type { ReversalAdjustment } from '@/types/reversal'
 import type { SaleRecord } from '@/types/sale'
 
 export interface CashSession {
@@ -53,4 +54,6 @@ export interface CashSummary {
   difference: number | null
   salesTotal: number
   expensesTotal: number
+  /** Ajustes negativos de anulaciones contabilizados en este turno. */
+  adjustments: ReversalAdjustment[]
 }

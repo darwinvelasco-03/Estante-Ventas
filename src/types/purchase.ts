@@ -1,5 +1,6 @@
 import type { CurrencyCode } from '@/config/currency'
 import type { PaymentMethod } from '@/types/pos'
+import type { ReversalStamp } from '@/types/reversal'
 
 export type PurchaseStatus = 'pendiente' | 'recibida'
 
@@ -30,6 +31,8 @@ export interface Purchase {
   paidAt: string | null
   note: string
   lines: PurchaseLine[]
+  /** Presente cuando el pago fue anulado; la orden conserva su historial. */
+  reversal?: ReversalStamp | null
 }
 
 export interface PurchaseLineInput {
@@ -55,3 +58,4 @@ export type PurchaseError =
   | 'no-encontrado'
   | 'recibida'
   | 'pagada'
+  | 'anulado'

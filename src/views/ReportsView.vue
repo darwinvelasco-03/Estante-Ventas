@@ -13,6 +13,7 @@ import { useReportPeriod } from '@/composables/useReportPeriod'
 import { isAllBranches } from '@/stores/branch'
 import { expenses } from '@/stores/expenses'
 import { purchases } from '@/stores/purchases'
+import { adjustments } from '@/stores/reversals'
 import { sales } from '@/stores/sales'
 import { dateInputValue } from '@/composables/useReportPeriod'
 import { buildReportCsv, downloadCsv } from '@/utils/reportCsv'
@@ -27,13 +28,21 @@ const { preset, from, to, range, label, setPreset } = useReportPeriod()
 const visibleSales = computed(() => (forcedEmpty ? [] : sales.value))
 const visibleExpenses = computed(() => (forcedEmpty ? [] : expenses.value))
 const visiblePurchases = computed(() => (forcedEmpty ? [] : purchases.value))
-const data = useReportData(visibleSales, visibleExpenses, visiblePurchases, range)
+const visibleAdjustments = computed(() => (forcedEmpty ? [] : adjustments.value))
+const data = useReportData(
+  visibleSales,
+  visibleExpenses,
+  visiblePurchases,
+  range,
+  visibleAdjustments,
+)
 
 const hasData = computed(
   () =>
     data.value.sales.length > 0 ||
     data.value.expenses.length > 0 ||
-    data.value.purchases.length > 0,
+    data.value.purchases.length > 0 ||
+    data.value.adjustments.length > 0,
 )
 
 function updatePreset(value: typeof preset.value) {
@@ -133,8 +142,9 @@ function exportCsv() {
             <p class="font-display text-sm font-semibold text-ink">Cómo se calcula</p>
             <p class="mt-1.5 text-xs leading-relaxed text-ink-soft">
               Solo se contabilizan los gastos y las órdenes de compra marcados como pagados. La
-              utilidad resta esos egresos de los cobros registrados, siempre en USD. El CSV incluye
-              el detalle y el resumen.
+              utilidad resta esos egresos de los cobros registrados, siempre en USD. Las anulaciones
+              conservan el documento en su fecha original y descuentan el importe con un ajuste en
+              la fecha en que se anularon; el CSV incluye ambos renglones.
             </p>
           </div>
         </aside>

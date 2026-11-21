@@ -47,8 +47,16 @@ const emit = defineEmits<{ select: [id: string] }>()
     </span>
 
     <StatusTag
-      :label="props.expense.status === 'pagado' ? 'Pagado' : 'Pendiente'"
-      :tone="props.expense.status === 'pagado' ? 'ok' : 'warn'"
+      :label="
+        props.expense.reversal
+          ? 'Anulado'
+          : props.expense.status === 'pagado'
+            ? 'Pagado'
+            : 'Pendiente'
+      "
+      :tone="
+        props.expense.reversal ? 'danger' : props.expense.status === 'pagado' ? 'ok' : 'warn'
+      "
     />
   </button>
 </template>

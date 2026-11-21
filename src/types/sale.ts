@@ -1,4 +1,5 @@
 import type { PaymentMethod } from '@/types/pos'
+import type { ReversalStamp } from '@/types/reversal'
 
 export interface SaleLineRecord {
   productId: string
@@ -21,6 +22,8 @@ export interface SaleRecord {
   change: number
   itemCount: number
   lines: SaleLineRecord[]
+  /** Presente cuando el cobro fue anulado; el registro se conserva para auditoría. */
+  reversal?: ReversalStamp | null
 }
 
 export interface SaleInput {

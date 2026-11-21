@@ -46,6 +46,7 @@ const paymentLabel = computed(() =>
           :paid="!!props.purchase.paidAt"
           :date="props.purchase.paidAt"
           :method="props.purchase.paymentMethod"
+          :voided="!!props.purchase.reversal"
         />
         <ReceivedStamp :received="!!props.purchase.receivedAt" :date="props.purchase.receivedAt" />
       </span>
@@ -77,6 +78,13 @@ const paymentLabel = computed(() =>
       <div v-if="props.purchase.note" class="flex items-start justify-between gap-4 py-2.5">
         <dt class="shrink-0 text-xs text-ink-soft">Nota</dt>
         <dd class="max-w-[65%] text-right text-sm leading-relaxed text-ink">{{ props.purchase.note }}</dd>
+      </div>
+      <div v-if="props.purchase.reversal" class="flex items-start justify-between gap-4 py-2.5">
+        <dt class="shrink-0 text-xs text-brick">Anulación</dt>
+        <dd class="max-w-[65%] text-right text-xs leading-relaxed text-brick">
+          {{ props.purchase.reversal.reason }} · {{ formatVisitParts(props.purchase.reversal.reversedAt).full }} ·
+          {{ props.purchase.reversal.by }}
+        </dd>
       </div>
     </dl>
 
@@ -120,7 +128,7 @@ const paymentLabel = computed(() =>
 
     <div class="mt-5 flex flex-wrap gap-2">
       <button
-        v-if="!props.purchase.paidAt && !props.readonly"
+        v-if="!props.purchase.paidAt && !props.purchase.reversal && !props.readonly"
         type="button"
         class="inline-flex items-center gap-1.5 rounded-sm border border-ok/50 bg-ok-soft px-3 py-2 font-display text-sm font-semibold text-ink hover:border-ok"
         @click="emit('pay')"
@@ -129,7 +137,7 @@ const paymentLabel = computed(() =>
         Marcar como pagada
       </button>
       <button
-        v-if="!props.purchase.receivedAt && !props.readonly"
+        v-if="!props.purchase.receivedAt && !props.purchase.reversal && !props.readonly"
         type="button"
         class="inline-flex items-center gap-1.5 rounded-sm bg-ink px-3 py-2 font-display text-sm font-semibold text-surface hover:bg-ink-soft"
         @click="emit('receive')"
@@ -138,7 +146,7 @@ const paymentLabel = computed(() =>
         Registrar recepción
       </button>
       <button
-        v-if="!props.purchase.receivedAt && !props.readonly"
+        v-if="!props.purchase.receivedAt && !props.purchase.reversal && !props.readonly"
         type="button"
         class="inline-flex items-center gap-1.5 rounded-sm border border-rail px-3 py-2 text-sm text-ink hover:border-ink"
         @click="emit('edit')"
@@ -147,7 +155,7 @@ const paymentLabel = computed(() =>
         Editar orden
       </button>
       <a
-        v-else
+        v-else-if="props.purchase.receivedAt"
         href="#/inventario"
         class="inline-flex items-center gap-1.5 rounded-sm border border-rail px-3 py-2 text-sm text-ink hover:border-ink"
       >
@@ -155,7 +163,7 @@ const paymentLabel = computed(() =>
         Ver entradas en Inventario
       </a>
       <button
-        v-if="!props.readonly"
+        v-if="!props.readonly && !props.purchase.reversal"
         type="button"
         class="inline-flex items-center gap-1.5 rounded-sm border border-brick/40 px-3 py-2 text-sm text-brick hover:border-brick"
         @click="emit('remove')"

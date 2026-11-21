@@ -4,8 +4,10 @@ import type { BranchKey } from '@/config/branches'
 import { branchId, isAllBranches, writableBranch } from '@/stores/branch'
 import { expensesFor } from '@/stores/expenses'
 import { orderedTotal, paidPurchasesFor } from '@/stores/purchases'
+import { adjustmentsFor } from '@/stores/reversals'
 import { salesFor } from '@/stores/sales'
 import type { CashCloseInput, CashError, CashSession, CashSessionInput, CashSummary } from '@/types/cash'
+import type { ReversalCategory } from '@/types/reversal'
 
 const STORAGE_KEY = 'estante.cash.v1'
 
@@ -97,6 +99,11 @@ export const closedSessions = computed(() => sessions.value.filter((session) => 
 export function findSession(id: string | null | undefined): CashSession | null {
   if (!id) return null
   return [...state.byBranch.centro, ...state.byBranch.norte].find((session) => session.id === id) ?? null
+}
+
+/** Turno abierta de una sucursal; es donde se contabilizan las anulaciones. */
+export function activeSessionFor(key: BranchKey): CashSession | null {
+  return state.byBranch[key].find((session) => !session.closedAt) ?? null
 }
 
 function persist(key: BranchKey) {
@@ -198,12 +205,29 @@ export function sessionSummary(session: CashSession): CashSummary {
   const purchaseTotal = (list: typeof purchases) =>
     list.reduce((sum, purchase) => sum + orderedTotal(purchase), 0)
 
-  const cashSalesTotal = total(cashSales)
-  const cardSalesTotal = total(cardSales)
-  const cashExpenseTotal = total(cashExpenses)
-  const otherExpenseTotal = total(otherExpenses)
-  const cashPurchaseTotal = purchaseTotal(cashPurchases)
-  const otherPurchaseTotal = purchaseTotal(otherPurchases)
+  /**
+   * Los documentos anulados siguen contando en su turno original; el ajuste se
+   * descuenta del turno que estaba abierto cuando se registró la anulación.
+   * Así un cierre ya realizado nunca se reescribe.
+   */
+  const adjustments = adjustmentsFor(session.branch).filter(
+    (adjustment) => adjustment.sessionId === session.id,
+  )
+  const adjustmentSum = (category: ReversalCategory, cashOnly: boolean | null = null) =>
+    adjustments
+      .filter(
+        (adjustment) =>
+          adjustment.category === category &&
+          (cashOnly === null || (adjustment.paymentMethod === 'efectivo') === cashOnly),
+      )
+      .reduce((sum, adjustment) => sum + adjustment.amount, 0)
+
+  const cashSalesTotal = total(cashSales) - adjustmentSum('venta', true)
+  const cardSalesTotal = total(cardSales) - adjustmentSum('venta', false)
+  const cashExpenseTotal = total(cashExpenses) - adjustmentSum('gasto', true)
+  const otherExpenseTotal = total(otherExpenses) - adjustmentSum('gasto', false)
+  const cashPurchaseTotal = purchaseTotal(cashPurchases) - adjustmentSum('compra', true)
+  const otherPurchaseTotal = purchaseTotal(otherPurchases) - adjustmentSum('compra', false)
   const expectedCash =
     session.openingAmount + cashSalesTotal - cashExpenseTotal - cashPurchaseTotal
 
@@ -224,5 +248,6 @@ export function sessionSummary(session: CashSession): CashSummary {
     difference: session.countedCash === null ? null : session.countedCash - expectedCash,
     salesTotal: cashSalesTotal + cardSalesTotal,
     expensesTotal: cashExpenseTotal + otherExpenseTotal,
+    adjustments,
   }
 }

@@ -38,6 +38,7 @@ export const navGroups: NavGroup[] = [
       { id: 'gastos', label: 'Gastos', icon: 'expenses' },
       { id: 'caja', label: 'Caja', icon: 'cash' },
       { id: 'reportes', label: 'Reportes', icon: 'reports' },
+      { id: 'movimientos', label: 'Movimientos', icon: 'history' },
     ],
   },
   {

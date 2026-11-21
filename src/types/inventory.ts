@@ -1,3 +1,5 @@
+import type { ReversalStamp } from '@/types/reversal'
+
 export type MovementType = 'entrada' | 'salida' | 'conteo'
 
 export interface StockMovement {
@@ -12,6 +14,8 @@ export interface StockMovement {
   note: string
   createdAt: string
   balance: number
+  /** Presente cuando el movimiento fue anulado; se conserva con su contra-movimiento. */
+  reversal?: ReversalStamp | null
 }
 
 export interface MovementInput {

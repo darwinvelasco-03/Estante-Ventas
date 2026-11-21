@@ -3,7 +3,8 @@ import { computed, reactive } from 'vue'
 import type { BranchKey } from '@/config/branches'
 import { branchId, isAllBranches, writableBranch } from '@/stores/branch'
 import { catalogProducts, setStock } from '@/stores/catalog'
-import type { MovementError, MovementInput, StockMovement } from '@/types/inventory'
+import type { MovementError, MovementInput, MovementType, StockMovement } from '@/types/inventory'
+import type { ReversalStamp } from '@/types/reversal'
 
 const STORAGE_KEY = 'estante.inventory.v1'
 
@@ -75,6 +76,11 @@ export const movements = computed(() => {
     : state.byBranch[branchId.value as BranchKey]
   return [...list].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
 })
+
+/** Acceso por sucursal para construir la bitácora unificada de Movimientos. */
+export function movementsFor(key: BranchKey): StockMovement[] {
+  return state.byBranch[key]
+}
 
 function persist(key: BranchKey) {
   try {
@@ -168,4 +174,37 @@ export function registerSale(lines: { productId: string; quantity: number }[], f
   }
   append(created)
   return created
+}
+
+/**
+ * Anula un movimiento y genera su contra-movimiento. Si el producto ya se vendió
+ * y no hay existencias para deshacer una entrada, el ajuste se hace hasta el
+ * saldo disponible y se deja constancia en la nota.
+ */
+export function voidMovement(id: string, stamp: ReversalStamp): StockMovement | null {
+  const key = writableBranch()
+  if (!key) return null
+  const movement = state.byBranch[key].find((item) => item.id === id)
+  if (!movement || movement.reversal) return null
+
+  movement.reversal = stamp
+  let counter: StockMovement | null = null
+  const product = catalogProducts.value.find((item) => item.id === movement.productId)
+  if (product && movement.delta !== 0) {
+    const type: MovementType = movement.delta > 0 ? 'salida' : 'entrada'
+    const requested = Math.abs(movement.delta)
+    const quantity = type === 'salida' ? Math.min(requested, product.stock) : requested
+    if (quantity > 0) {
+      const partial = quantity < requested ? ' (ajuste parcial por stock)' : ''
+      counter = registerMovement({
+        productId: movement.productId,
+        type,
+        quantity,
+        reason: 'Reversión',
+        note: `Anulación ${movement.id}${partial}`,
+      }).movement
+    }
+  }
+  persist(key)
+  return counter
 }

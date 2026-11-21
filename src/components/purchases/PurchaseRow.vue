@@ -72,6 +72,7 @@ const total = computed(() =>
         :paid="!!props.purchase.paidAt"
         :date="props.purchase.paidAt"
         :method="props.purchase.paymentMethod"
+        :voided="!!props.purchase.reversal"
       />
       <ReceivedStamp :received="!!props.purchase.receivedAt" :date="props.purchase.receivedAt" />
     </span>

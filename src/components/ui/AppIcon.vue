@@ -40,6 +40,8 @@ const paths: Record<IconName, string> = {
   check: '<path d="m5 12 4 4L19 6"/>',
   alert: '<path d="M12 3 2 21h20L12 3Z"/><path d="M12 9v5M12 17h.01"/>',
   clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  history:
+    '<path d="M3.5 12a8.5 8.5 0 1 0 2.8-6.3"/><path d="M3 4.5V10h5.5"/><path d="M12 8v4.3l3 1.8"/>',
   logout: '<path d="M10 4H5v16h5"/><path d="m14 8 4 4-4 4M18 12H9"/>',
   minus: '<path d="M5 12h14"/>',
   trash: '<path d="M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14"/><path d="M10 11v6M14 11v6"/>',

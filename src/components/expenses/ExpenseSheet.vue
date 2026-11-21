@@ -147,6 +147,7 @@ const errorText: Record<ExpenseError, string> = {
   fecha: 'Revisa la fecha del gasto.',
   'no-encontrado': 'No pudimos encontrar el gasto.',
   pagado: 'Un gasto pagado ya no se puede editar.',
+  anulado: 'Este gasto fue anulado; consulta el rastro en Movimientos.',
 }
 </script>
 

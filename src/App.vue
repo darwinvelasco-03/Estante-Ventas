@@ -18,6 +18,7 @@ import PurchasesView from '@/views/PurchasesView.vue'
 import ExpensesView from '@/views/ExpensesView.vue'
 import CashView from '@/views/CashView.vue'
 import ReportsView from '@/views/ReportsView.vue'
+import MovementsView from '@/views/MovementsView.vue'
 import UsersView from '@/views/UsersView.vue'
 import CompaniesView from '@/views/CompaniesView.vue'
 import BranchesView from '@/views/BranchesView.vue'
@@ -83,6 +84,7 @@ const restrictedRoute = computed(() => !!currentItem.value?.adminOnly)
     <ExpensesView v-else-if="route === 'gastos'" :branch="branchLabel" />
     <CashView v-else-if="route === 'caja'" :branch="branchLabel" />
     <ReportsView v-else-if="route === 'reportes'" :branch="branchLabel" />
+    <MovementsView v-else-if="route === 'movimientos'" :branch="branchLabel" />
     <CompaniesView v-else-if="route === 'empresas' && canManageUsers" :branch="branchLabel" />
     <BranchesView v-else-if="route === 'sucursales' && canManageUsers" :branch="branchLabel" />
     <UsersView v-else-if="route === 'usuarios' && canManageUsers" :branch="branchLabel" />

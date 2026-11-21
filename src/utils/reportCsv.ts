@@ -1,5 +1,6 @@
 import type { ReportData } from '@/composables/useReportData'
 import { orderedTotal } from '@/stores/purchases'
+import type { ReversalCategory } from '@/types/reversal'
 
 function cell(value: string | number) {
   return `"${String(value).replace(/"/g, '""')}"`
@@ -40,6 +41,21 @@ export function buildReportCsv(data: ReportData) {
       datePart(purchase.paidAt ?? purchase.createdAt),
       purchase.paymentMethod === 'efectivo' ? 'Efectivo' : 'Tarjeta',
       orderedTotal(purchase).toFixed(2),
+    ])
+  }
+
+  const reversalLabels: Record<ReversalCategory, string> = {
+    venta: 'Anulación de venta',
+    gasto: 'Anulación de gasto',
+    compra: 'Anulación de compra',
+  }
+  for (const adjustment of data.adjustments) {
+    rows.push([
+      reversalLabels[adjustment.category],
+      adjustment.folio,
+      datePart(adjustment.createdAt),
+      adjustment.reason || 'Sin motivo',
+      (-adjustment.amount).toFixed(2),
     ])
   }
 

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import CashAdjustments from './CashAdjustments.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 import StatusTag from '@/components/ui/StatusTag.vue'
 import type { CashSession, CashSummary } from '@/types/cash'
@@ -67,6 +68,10 @@ const emit = defineEmits<{ close: [] }>()
           {{ formatCurrency(props.summary.expectedCash, 2) }}
         </p>
       </div>
+    </div>
+
+    <div class="px-4 pb-1">
+      <CashAdjustments :adjustments="props.summary.adjustments" />
     </div>
 
     <div class="flex flex-wrap items-center justify-between gap-3 px-4 py-3">

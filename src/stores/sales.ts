@@ -2,6 +2,7 @@ import { computed, reactive } from 'vue'
 
 import type { BranchKey } from '@/config/branches'
 import { branchId, isAllBranches, writableBranch } from '@/stores/branch'
+import type { ReversalStamp } from '@/types/reversal'
 import type { SaleInput, SaleLineRecord, SaleRecord } from '@/types/sale'
 
 const STORAGE_KEY = 'estante.sales.v1'
@@ -159,4 +160,15 @@ export function registerSale(input: SaleInput): SaleRecord {
   state.byBranch[key].push(record)
   persist(key)
   return record
+}
+
+/** Anula un cobro conservando el registro original y su huella de auditoría. */
+export function voidSale(id: string, stamp: ReversalStamp): SaleRecord | null {
+  const key = writableBranch()
+  if (!key) return null
+  const sale = state.byBranch[key].find((item) => item.id === id)
+  if (!sale || sale.reversal) return null
+  sale.reversal = stamp
+  persist(key)
+  return sale
 }

@@ -143,6 +143,7 @@ const errorText: Record<PurchaseError, string> = {
   'no-encontrado': 'La orden ya no existe.',
   recibida: 'Una orden recibida no se puede modificar.',
   pagada: 'Esta orden ya está pagada.',
+  anulado: 'Esta orden fue anulada; consulta el rastro en Movimientos.',
 }
 </script>
 

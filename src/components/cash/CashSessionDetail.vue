@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
+import CashAdjustments from './CashAdjustments.vue'
 import StatePanel from '@/components/ui/StatePanel.vue'
 import StatusTag from '@/components/ui/StatusTag.vue'
 import { orderedTotal } from '@/stores/purchases'
@@ -194,6 +195,10 @@ const period = computed(() => {
         <p v-else class="rounded-sm bg-paper px-3 py-2 text-xs text-ink-soft">
           No hubo compras pagadas en este periodo.
         </p>
+      </div>
+
+      <div class="mt-5">
+        <CashAdjustments :adjustments="props.entry.summary.adjustments" />
       </div>
     </template>
   </div>

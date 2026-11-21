@@ -25,6 +25,7 @@ export type IconName =
   | 'check'
   | 'alert'
   | 'clock'
+  | 'history'
   | 'logout'
   | 'minus'
   | 'trash'
