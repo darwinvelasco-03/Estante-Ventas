@@ -31,11 +31,11 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      - name: Configurar Android SDK
-        uses: android-actions/setup-android@v3
-
       - name: Instalar plataforma Android 36
-        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+        # El runner de Ubuntu ya trae el SDK y las licencias aceptadas.
+        run: |
+          SDK_MANAGER="$(command -v sdkmanager || echo "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager")"
+          "$SDK_MANAGER" "platforms;android-36" "build-tools;36.0.0"
 
       - name: Instalar dependencias
         run: npm ci
