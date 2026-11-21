@@ -1,0 +1,8 @@
+{
+  "appId": "com.estante.app",
+  "appName": "Estante",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  }
+}

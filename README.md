@@ -78,3 +78,39 @@ Para reiniciar los datos de ejemplo y cerrar la sesión, borra las claves `estan
 La versión pública está en **https://darwinvelasco-03.github.io/Estante-Ventas/**. El flujo `.github/workflows/deploy.yml` compila con `npm ci` + `npm run build` y publica `dist` en GitHub Pages en cada push a `master` (o manualmente desde *Actions → Deploy a GitHub Pages → Run workflow*). El build usa rutas relativas (`base: './'`) para funcionar bajo el subdirectorio del proyecto.
 
 La aplicación es estática y sigue siendo una demo: el estado vive en el `localStorage` de cada navegador, así que los datos no se sincronizan entre dispositivos y el servicio no necesita que la máquina de desarrollo esté encendida.
+
+## Aplicación de escritorio (Windows)
+
+La misma interfaz se empaqueta con **Electron**. El proceso principal (`electron/main.cjs`) sirve `dist` mediante el protocolo `app://` porque los módulos ES no cargan desde `file://`; el router por hash y el código de la app no necesitan cambios.
+
+```bash
+npm install
+npm run electron:dev     # compila y abre la app electron sin empaquetar
+npm run electron:build   # compila y genera los .exe en dist-electron/
+```
+
+Artefactos generados en `dist-electron/`:
+
+- **Instalador:** `Estante Setup 0.0.0.exe` (NSIS, instalación por usuario, con accesos directos).
+- **Portable:** `Estante-Portable.exe` (sin instalación).
+
+El ícono de la app es `build/icon.ico` (256×256), generado con los colores de la marca. La app funciona sin conexión.
+
+> El `localStorage` de la app de escritorio es **independiente** del navegador y de GitHub Pages: lo que registres en una versión no aparece en las otras. Siguen aplicando los avisos de demo local sobre contraseñas sin cifrar.
+
+## Aplicación Android (APK)
+
+La misma app se empaqueta para celular con **Capacitor 8**. El proyecto nativo está en `android/` y no necesita plugins especiales: la interfaz se ejecuta en un WebView con los archivos del build incluidos, así que funciona sin conexión.
+
+El APK se compila automáticamente en GitHub Actions (`.github/workflows/apk.yml`) en cada push a `master` o manualmente desde *Actions → Compilar APK de Estante → Run workflow*. El workflow instala JDK 21 y el SDK de Android 36, corre `npm run build` + `npx cap sync android` y Gradle, y deja el resultado en dos lugares:
+
+- **Release «Estante para Android»** (tag `apk-latest`): descarga directa del `app-debug.apk`.
+- **Artefacto `Estante-APK`** en cada ejecución del workflow.
+
+Para sincronizar cambios locales (requiere Node 22+ y `npx cap add android` ya ejecutado):
+
+```bash
+npm run android:sync
+```
+
+> El APK es de **depuración**, suficiente para instalarlo directamente habilitando «Instalar aplicaciones desconocidas» en el celular; no está firmado para Google Play. El `localStorage` de la app Android es independiente del navegador, de GitHub Pages y del `.exe`.
