@@ -4,6 +4,7 @@ import { computed } from 'vue'
 import type { Purchase } from '@/types/purchase'
 import { formatCurrency, formatMovementDate } from '@/utils/format'
 import { purchaseRowGrid } from './grid'
+import PaymentStamp from './PaymentStamp.vue'
 import ReceivedStamp from './ReceivedStamp.vue'
 
 const props = defineProps<{ purchase: Purchase; selected: boolean }>()
@@ -66,6 +67,13 @@ const total = computed(() =>
       <span class="block text-[10px] tracking-wide text-ink-soft">{{ props.purchase.currency }}</span>
     </span>
 
-    <ReceivedStamp :received="!!props.purchase.receivedAt" :date="props.purchase.receivedAt" />
+    <span class="flex flex-wrap items-start justify-end gap-x-3 gap-y-1 md:justify-end">
+      <PaymentStamp
+        :paid="!!props.purchase.paidAt"
+        :date="props.purchase.paidAt"
+        :method="props.purchase.paymentMethod"
+      />
+      <ReceivedStamp :received="!!props.purchase.receivedAt" :date="props.purchase.receivedAt" />
+    </span>
   </button>
 </template>

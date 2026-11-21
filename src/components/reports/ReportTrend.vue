@@ -7,12 +7,12 @@ import { formatCurrency } from '@/utils/format'
 const props = defineProps<{ days: DayPoint[] }>()
 
 const max = computed(() =>
-  props.days.reduce((peak, day) => Math.max(peak, day.sales, day.expenses), 0),
+  props.days.reduce((peak, day) => Math.max(peak, day.sales, day.expenses, day.purchases), 0),
 )
 
 const summary = computed(() =>
   props.days
-    .map((day) => `${day.label}: ${formatCurrency(day.sales, 0)} en ventas, ${formatCurrency(day.expenses, 0)} en gastos`)
+    .map((day) => `${day.label}: ${formatCurrency(day.sales, 0)} en ventas, ${formatCurrency(day.expenses, 0)} en gastos, ${formatCurrency(day.purchases, 0)} en compras`)
     .join('. '),
 )
 
@@ -31,12 +31,13 @@ function showLabel(index: number) {
   <div class="border-b border-rail pb-5">
     <div class="mb-3 flex flex-wrap items-baseline justify-between gap-2">
       <div>
-        <h2 class="font-display text-base font-semibold text-ink">Ventas vs. gastos</h2>
+        <h2 class="font-display text-base font-semibold text-ink">Ventas, gastos y compras</h2>
         <p class="text-xs text-ink-soft">Por día · importes en USD</p>
       </div>
       <div class="flex items-center gap-3 text-[11px] text-ink-soft">
         <span class="flex items-center gap-1.5"><span class="size-2 bg-ink" aria-hidden="true" /> Ventas</span>
         <span class="flex items-center gap-1.5"><span class="size-2 bg-mustard" aria-hidden="true" /> Gastos</span>
+        <span class="flex items-center gap-1.5"><span class="size-2 bg-brick" aria-hidden="true" /> Compras</span>
       </div>
     </div>
 
@@ -57,14 +58,19 @@ function showLabel(index: number) {
       >
         <div class="flex h-32 w-full items-end justify-center gap-[2px]" aria-hidden="true">
           <div
-            class="w-[7px] rounded-t-sm bg-ink transition-[height] duration-300"
+            class="w-[6px] rounded-t-sm bg-ink transition-[height] duration-300"
             :style="{ height: height(day.sales) }"
             :title="`${day.label} · ventas ${formatCurrency(day.sales, 2)}`"
           />
           <div
-            class="w-[7px] rounded-t-sm bg-mustard transition-[height] duration-300"
+            class="w-[6px] rounded-t-sm bg-mustard transition-[height] duration-300"
             :style="{ height: height(day.expenses) }"
             :title="`${day.label} · gastos ${formatCurrency(day.expenses, 2)}`"
+          />
+          <div
+            class="w-[6px] rounded-t-sm bg-brick transition-[height] duration-300"
+            :style="{ height: height(day.purchases) }"
+            :title="`${day.label} · compras ${formatCurrency(day.purchases, 2)}`"
           />
         </div>
         <span class="h-3 text-[9px] leading-3 text-ink-soft">

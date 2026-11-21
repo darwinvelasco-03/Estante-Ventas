@@ -20,9 +20,15 @@ const metrics = computed(() => [
     tone: 'default',
   },
   {
+    label: 'Compras pagadas',
+    value: formatCurrency(props.data.purchasesTotal),
+    hint: `${formatNumber(props.data.purchases.length)} órdenes pagadas`,
+    tone: 'default',
+  },
+  {
     label: 'Utilidad',
     value: formatCurrency(props.data.profit),
-    hint: 'Ventas menos gastos del periodo',
+    hint: 'Ventas menos gastos y compras pagadas',
     tone: props.data.profit < 0 ? 'warn' : 'default',
   },
   {
@@ -36,7 +42,7 @@ const metrics = computed(() => [
 
 <template>
   <section
-    class="grid grid-cols-2 divide-x divide-y divide-rail rounded-sm border border-rail bg-surface md:grid-cols-4 md:divide-y-0"
+    class="grid grid-cols-2 divide-x divide-y divide-rail rounded-sm border border-rail bg-surface md:grid-cols-3 lg:grid-cols-5 lg:divide-y-0"
     aria-label="Indicadores del periodo"
   >
     <div v-for="metric in metrics" :key="metric.label" class="min-w-0 px-4 py-4 sm:px-5">

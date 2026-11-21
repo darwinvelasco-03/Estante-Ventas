@@ -7,12 +7,13 @@ import { findSupplier } from '@/stores/suppliers'
 import type { Purchase } from '@/types/purchase'
 import { formatCurrency, formatVisitParts } from '@/utils/format'
 import { purchaseLineGrid } from './grid'
+import PaymentStamp from './PaymentStamp.vue'
 import PurchaseLineRow from './PurchaseLineRow.vue'
 import ReceivedStamp from './ReceivedStamp.vue'
 
 const props = defineProps<{ purchase: Purchase; readonly?: boolean }>()
 
-const emit = defineEmits<{ edit: []; receive: []; remove: [] }>()
+const emit = defineEmits<{ edit: []; receive: []; remove: []; pay: [] }>()
 
 const supplier = computed(() => findSupplier(props.purchase.supplierId))
 const ordered = computed(() =>
@@ -23,6 +24,11 @@ const received = computed(() =>
 )
 const pending = computed(() => Math.max(0, ordered.value - received.value))
 const created = computed(() => formatVisitParts(props.purchase.createdAt).full)
+const paymentLabel = computed(() =>
+  props.purchase.paidAt
+    ? `${props.purchase.paymentMethod === 'efectivo' ? 'Efectivo' : 'Tarjeta'} · ${formatVisitParts(props.purchase.paidAt).full}`
+    : 'Pendiente de pago',
+)
 </script>
 
 <template>
@@ -35,7 +41,14 @@ const created = computed(() => formatVisitParts(props.purchase.createdAt).full)
         </h2>
         <p class="mt-0.5 truncate text-sm text-ink-soft">{{ props.purchase.supplierName }}</p>
       </div>
-      <ReceivedStamp :received="!!props.purchase.receivedAt" :date="props.purchase.receivedAt" />
+      <span class="flex flex-wrap items-start justify-end gap-x-3 gap-y-1">
+        <PaymentStamp
+          :paid="!!props.purchase.paidAt"
+          :date="props.purchase.paidAt"
+          :method="props.purchase.paymentMethod"
+        />
+        <ReceivedStamp :received="!!props.purchase.receivedAt" :date="props.purchase.receivedAt" />
+      </span>
     </div>
 
     <dl class="mt-5 divide-y divide-rail border-y border-rail">
@@ -48,6 +61,10 @@ const created = computed(() => formatVisitParts(props.purchase.createdAt).full)
         <dd class="max-w-[65%] text-right text-sm leading-relaxed text-ink">
           {{ supplier?.line || 'Sin línea registrada' }}
         </dd>
+      </div>
+      <div class="flex items-start justify-between gap-4 py-2.5">
+        <dt class="shrink-0 text-xs text-ink-soft">Pago</dt>
+        <dd class="max-w-[65%] text-right text-sm leading-relaxed text-ink">{{ paymentLabel }}</dd>
       </div>
       <div v-if="supplier && supplier.deliveryDays.length > 0" class="flex items-start justify-between gap-4 py-2.5">
         <dt class="shrink-0 text-xs text-ink-soft">Entrega del proveedor</dt>
@@ -102,6 +119,15 @@ const created = computed(() => formatVisitParts(props.purchase.createdAt).full)
     </div>
 
     <div class="mt-5 flex flex-wrap gap-2">
+      <button
+        v-if="!props.purchase.paidAt && !props.readonly"
+        type="button"
+        class="inline-flex items-center gap-1.5 rounded-sm border border-ok/50 bg-ok-soft px-3 py-2 font-display text-sm font-semibold text-ink hover:border-ok"
+        @click="emit('pay')"
+      >
+        <AppIcon name="cash" :size="15" />
+        Marcar como pagada
+      </button>
       <button
         v-if="!props.purchase.receivedAt && !props.readonly"
         type="button"

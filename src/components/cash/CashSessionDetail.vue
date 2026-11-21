@@ -3,6 +3,7 @@ import { computed } from 'vue'
 
 import StatePanel from '@/components/ui/StatePanel.vue'
 import StatusTag from '@/components/ui/StatusTag.vue'
+import { orderedTotal } from '@/stores/purchases'
 import type { CashSessionEntry } from '@/types/cash'
 import {
   formatCurrency,
@@ -72,6 +73,10 @@ const period = computed(() => {
         <div class="flex items-center justify-between gap-3 py-2.5">
           <dt class="text-ink-soft">Gastos pagados</dt>
           <dd class="tnum text-ink">-{{ formatCurrency(props.entry.summary.expensesTotal, 2) }}</dd>
+        </div>
+        <div class="flex items-center justify-between gap-3 py-2.5">
+          <dt class="text-ink-soft">Compras pagadas</dt>
+          <dd class="tnum text-ink">-{{ formatCurrency(props.entry.summary.purchasesTotal, 2) }}</dd>
         </div>
         <div class="flex items-center justify-between gap-3 py-2.5">
           <dt class="text-ink-soft">Efectivo esperado</dt>
@@ -156,6 +161,38 @@ const period = computed(() => {
         </ul>
         <p v-else class="rounded-sm bg-paper px-3 py-2 text-xs text-ink-soft">
           No hubo gastos pagados en efectivo en este periodo.
+        </p>
+      </div>
+
+      <div class="mt-5">
+        <p class="mb-2 text-[11px] font-medium tracking-wide text-ink-soft">
+          Compras pagadas ({{ props.entry.summary.purchases.length }})
+        </p>
+        <ul
+          v-if="props.entry.summary.purchases.length"
+          class="divide-y divide-rail border-y border-rail"
+        >
+          <li
+            v-for="purchase in props.entry.summary.purchases"
+            :key="purchase.id"
+            class="flex items-center justify-between gap-3 py-2 text-xs"
+          >
+            <span class="min-w-0">
+              <span class="block truncate font-medium text-ink">
+                {{ purchase.folio }} · {{ purchase.supplierName }}
+              </span>
+              <span class="block text-[11px] text-ink-soft">
+                {{ formatMovementDate(purchase.paidAt ?? purchase.createdAt) }} ·
+                {{ methodLabel(purchase.paymentMethod) }}
+              </span>
+            </span>
+            <span class="tnum shrink-0 font-medium text-brick">
+              -{{ formatCurrency(orderedTotal(purchase), 2) }}
+            </span>
+          </li>
+        </ul>
+        <p v-else class="rounded-sm bg-paper px-3 py-2 text-xs text-ink-soft">
+          No hubo compras pagadas en este periodo.
         </p>
       </div>
     </template>

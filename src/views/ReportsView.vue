@@ -12,6 +12,7 @@ import { useReportData } from '@/composables/useReportData'
 import { useReportPeriod } from '@/composables/useReportPeriod'
 import { isAllBranches } from '@/stores/branch'
 import { expenses } from '@/stores/expenses'
+import { purchases } from '@/stores/purchases'
 import { sales } from '@/stores/sales'
 import { dateInputValue } from '@/composables/useReportPeriod'
 import { buildReportCsv, downloadCsv } from '@/utils/reportCsv'
@@ -25,9 +26,15 @@ const error = ref(params.get('reportes') === 'error' ? 'Revisa tu conexión e in
 const { preset, from, to, range, label, setPreset } = useReportPeriod()
 const visibleSales = computed(() => (forcedEmpty ? [] : sales.value))
 const visibleExpenses = computed(() => (forcedEmpty ? [] : expenses.value))
-const data = useReportData(visibleSales, visibleExpenses, range)
+const visiblePurchases = computed(() => (forcedEmpty ? [] : purchases.value))
+const data = useReportData(visibleSales, visibleExpenses, visiblePurchases, range)
 
-const hasData = computed(() => data.value.sales.length > 0 || data.value.expenses.length > 0)
+const hasData = computed(
+  () =>
+    data.value.sales.length > 0 ||
+    data.value.expenses.length > 0 ||
+    data.value.purchases.length > 0,
+)
 
 function updatePreset(value: typeof preset.value) {
   setPreset(value)
@@ -46,7 +53,7 @@ function exportCsv() {
       <div>
         <h2 class="font-display text-xl font-semibold tracking-tight text-ink">Reportes</h2>
         <p class="mt-0.5 text-sm text-ink-soft">
-          Ventas, gastos y utilidad · {{ props.branch }}
+          Ventas, gastos, compras y utilidad · {{ props.branch }}
         </p>
       </div>
       <button
@@ -114,11 +121,20 @@ function exportCsv() {
           <div class="rounded-sm border border-rail bg-surface px-5 py-5">
             <TopProducts :products="data.products" />
           </div>
+          <div class="rounded-sm border border-rail bg-surface px-5 py-5">
+            <BreakdownPanel
+              title="Compras por proveedor"
+              :slices="data.suppliers"
+              accent="brick"
+              empty-message="No hay compras pagadas en el periodo."
+            />
+          </div>
           <div class="rounded-sm border border-rail bg-paper px-5 py-4">
             <p class="font-display text-sm font-semibold text-ink">Cómo se calcula</p>
             <p class="mt-1.5 text-xs leading-relaxed text-ink-soft">
-              Solo se contabilizan los gastos marcados como pagados. La utilidad resta esos egresos
-              de los cobros registrados, siempre en USD. El CSV incluye el detalle y el resumen.
+              Solo se contabilizan los gastos y las órdenes de compra marcados como pagados. La
+              utilidad resta esos egresos de los cobros registrados, siempre en USD. El CSV incluye
+              el detalle y el resumen.
             </p>
           </div>
         </aside>
@@ -132,7 +148,7 @@ function exportCsv() {
         :message="
           error
             ? error
-            : 'Prueba con un periodo más amplio o registra cobros y gastos pagados.'
+            : 'Prueba con un periodo más amplio o registra cobros, gastos y compras pagadas.'
         "
         :tone="error ? 'danger' : 'neutral'"
       />

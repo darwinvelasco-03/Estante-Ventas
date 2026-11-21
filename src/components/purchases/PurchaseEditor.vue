@@ -8,6 +8,7 @@ import { catalogProducts } from '@/stores/catalog'
 import { currencyCode, toUsd } from '@/stores/currency'
 import { suppliers } from '@/stores/suppliers'
 import { amountForInput } from '@/utils/format'
+import type { PaymentMethod } from '@/types/pos'
 import type { Purchase, PurchaseError, PurchaseInput } from '@/types/purchase'
 
 const props = defineProps<{ open: boolean; purchase: Purchase | null }>()
@@ -31,6 +32,8 @@ const error = ref<PurchaseError | null>(null)
 const dialog = ref<HTMLElement | null>(null)
 const supplierInput = ref<HTMLSelectElement | null>(null)
 const editorCurrency = ref<CurrencyCode>(currencyCode.value)
+const paymentMethod = ref<PaymentMethod>('efectivo')
+const paid = ref(false)
 
 let keyCounter = 0
 function nextKey() {
@@ -44,6 +47,8 @@ watch(
     if (!open) return
     const code = props.purchase?.currency ?? currencyCode.value
     editorCurrency.value = code
+    paymentMethod.value = props.purchase?.paymentMethod ?? 'efectivo'
+    paid.value = !!props.purchase?.paidAt
     supplierId.value = props.purchase?.supplierId ?? suppliers.value[0]?.id ?? ''
     note.value = props.purchase?.note ?? ''
     lines.value =
@@ -138,6 +143,8 @@ function submit() {
     {
       supplierId: supplierId.value,
       currency: editorCurrency.value,
+      paid: paid.value,
+      paymentMethod: paymentMethod.value,
       note: note.value,
       lines: lines.value.map((line) => ({
         productId: line.productId,
@@ -150,13 +157,14 @@ function submit() {
   )
 }
 
-const errorText = {
+const errorText: Record<PurchaseError, string> = {
   proveedor: 'Elige un proveedor para la orden.',
   renglones: 'Agrega al menos un renglón.',
   cantidad: 'La cantidad pedida debe ser mayor a cero.',
   costo: 'El costo unitario no puede ser negativo.',
   'no-encontrado': 'No pudimos encontrar la orden.',
   recibida: 'Una orden recibida ya no se puede editar.',
+  pagada: 'Esta orden ya está pagada.',
 }
 </script>
 
@@ -291,6 +299,39 @@ const errorText = {
               Agregar renglón
             </button>
           </fieldset>
+
+          <div class="grid gap-3 sm:grid-cols-2">
+            <div>
+              <label for="purchase-payment" class="mb-1 block text-xs font-medium text-ink-soft">
+                Forma de pago
+              </label>
+              <select
+                id="purchase-payment"
+                v-model="paymentMethod"
+                class="w-full rounded-sm border border-rail bg-surface px-2.5 py-2 text-sm text-ink focus-visible:border-ink focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ink/20"
+              >
+                <option value="efectivo">Efectivo</option>
+                <option value="tarjeta">Tarjeta</option>
+              </select>
+            </div>
+            <label
+              for="purchase-paid"
+              class="flex cursor-pointer items-start gap-2 rounded-sm border border-rail px-3 py-2 hover:border-ink"
+            >
+              <input
+                id="purchase-paid"
+                v-model="paid"
+                type="checkbox"
+                class="mt-0.5 size-4 shrink-0 accent-ink"
+              />
+              <span>
+                <span class="block text-sm font-medium text-ink">Orden pagada</span>
+                <span class="block text-[11px] leading-relaxed text-ink-soft">
+                  Se contabiliza como egreso en Caja y Reportes.
+                </span>
+              </span>
+            </label>
+          </div>
 
           <div>
             <label for="purchase-note" class="mb-1 block text-xs font-medium text-ink-soft">

@@ -1,4 +1,5 @@
 import type { ReportData } from '@/composables/useReportData'
+import { orderedTotal } from '@/stores/purchases'
 
 function cell(value: string | number) {
   return `"${String(value).replace(/"/g, '""')}"`
@@ -32,10 +33,20 @@ export function buildReportCsv(data: ReportData) {
       expense.amount.toFixed(2),
     ])
   }
+  for (const purchase of data.purchases) {
+    rows.push([
+      'Compra',
+      `${purchase.folio} ${purchase.supplierName}`.trim(),
+      datePart(purchase.paidAt ?? purchase.createdAt),
+      purchase.paymentMethod === 'efectivo' ? 'Efectivo' : 'Tarjeta',
+      orderedTotal(purchase).toFixed(2),
+    ])
+  }
 
   rows.push([])
   rows.push(['Resumen', 'Ventas', '', '', data.salesTotal.toFixed(2)])
   rows.push(['Resumen', 'Gastos pagados', '', '', data.expensesTotal.toFixed(2)])
+  rows.push(['Resumen', 'Compras pagadas', '', '', data.purchasesTotal.toFixed(2)])
   rows.push(['Resumen', 'Utilidad', '', '', data.profit.toFixed(2)])
   rows.push(['Resumen', 'Margen (%)', '', '', data.margin.toFixed(2)])
 

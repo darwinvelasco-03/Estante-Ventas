@@ -3,6 +3,7 @@ import { computed, reactive } from 'vue'
 import type { BranchKey } from '@/config/branches'
 import { branchId, isAllBranches, writableBranch } from '@/stores/branch'
 import { expensesFor } from '@/stores/expenses'
+import { orderedTotal, paidPurchasesFor } from '@/stores/purchases'
 import { salesFor } from '@/stores/sales'
 import type { CashCloseInput, CashError, CashSession, CashSessionInput, CashSummary } from '@/types/cash'
 
@@ -171,8 +172,9 @@ export function closeSession(id: string, input: CashCloseInput): {
 }
 
 /**
- * Cuadre de una sesión: solo cuentan los cobros y los gastos pagados en efectivo
- * ocurridos entre su apertura y su cierre (o ahora, si sigue abierta).
+ * Cuadre de una sesión: cuentan los cobros, los gastos pagados y las compras
+ * pagadas ocurridos entre su apertura y su cierre (o ahora, si sigue abierta).
+ * Solo las operaciones en efectivo afectan el efectivo esperado.
  */
 export function sessionSummary(session: CashSession): CashSummary {
   const end = session.closedAt ?? new Date().toISOString()
@@ -183,19 +185,27 @@ export function sessionSummary(session: CashSession): CashSummary {
   const expenses = expensesFor(session.branch).filter(
     (expense) => expense.status === 'pagado' && inRange(expense.paidAt),
   )
+  const purchases = paidPurchasesFor(session.branch).filter((purchase) => inRange(purchase.paidAt))
   const cashSales = sales.filter((sale) => sale.paymentMethod === 'efectivo')
   const cardSales = sales.filter((sale) => sale.paymentMethod === 'tarjeta')
   const cashExpenses = expenses.filter((expense) => expense.paymentMethod === 'efectivo')
   const otherExpenses = expenses.filter((expense) => expense.paymentMethod !== 'efectivo')
+  const cashPurchases = purchases.filter((purchase) => purchase.paymentMethod === 'efectivo')
+  const otherPurchases = purchases.filter((purchase) => purchase.paymentMethod !== 'efectivo')
 
   const total = (list: { amount?: number; total?: number }[]) =>
     list.reduce((sum, item) => sum + (item.amount ?? item.total ?? 0), 0)
+  const purchaseTotal = (list: typeof purchases) =>
+    list.reduce((sum, purchase) => sum + orderedTotal(purchase), 0)
 
   const cashSalesTotal = total(cashSales)
   const cardSalesTotal = total(cardSales)
   const cashExpenseTotal = total(cashExpenses)
   const otherExpenseTotal = total(otherExpenses)
-  const expectedCash = session.openingAmount + cashSalesTotal - cashExpenseTotal
+  const cashPurchaseTotal = purchaseTotal(cashPurchases)
+  const otherPurchaseTotal = purchaseTotal(otherPurchases)
+  const expectedCash =
+    session.openingAmount + cashSalesTotal - cashExpenseTotal - cashPurchaseTotal
 
   return {
     sales,
@@ -204,6 +214,12 @@ export function sessionSummary(session: CashSession): CashSummary {
     cashExpenses,
     cashExpenseTotal,
     otherExpenseTotal,
+    purchases,
+    cashPurchases,
+    otherPurchases,
+    cashPurchaseTotal,
+    otherPurchaseTotal,
+    purchasesTotal: cashPurchaseTotal + otherPurchaseTotal,
     expectedCash,
     difference: session.countedCash === null ? null : session.countedCash - expectedCash,
     salesTotal: cashSalesTotal + cardSalesTotal,

@@ -1,5 +1,6 @@
 import type { BranchKey } from '@/config/branches'
 import type { Expense } from '@/types/expense'
+import type { Purchase } from '@/types/purchase'
 import type { SaleRecord } from '@/types/sale'
 
 export interface CashSession {
@@ -40,6 +41,13 @@ export interface CashSummary {
   cashExpenses: Expense[]
   cashExpenseTotal: number
   otherExpenseTotal: number
+  /** Órdenes de compra pagadas durante el turno, en cualquier forma de pago. */
+  purchases: Purchase[]
+  cashPurchases: Purchase[]
+  otherPurchases: Purchase[]
+  cashPurchaseTotal: number
+  otherPurchaseTotal: number
+  purchasesTotal: number
   expectedCash: number
   /** Contado menos esperado; null mientras no se haya cerrado la sesión. */
   difference: number | null

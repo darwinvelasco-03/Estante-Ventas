@@ -122,7 +122,12 @@ function submit() {
             </strong>
           </div>
           <p class="mt-1 text-[11px] leading-relaxed text-ink-soft">
-            Fondo + ventas en efectivo − gastos pagados en efectivo.
+            Fondo + ventas en efectivo − gastos pagados en efectivo − compras pagadas en efectivo.
+          </p>
+          <p class="tnum mt-2 text-[11px] text-ink-soft">
+            +{{ formatCurrency(props.summary.cashSales, 2) }} ·
+            −{{ formatCurrency(props.summary.cashExpenseTotal, 2) }} ·
+            −{{ formatCurrency(props.summary.cashPurchaseTotal, 2) }}
           </p>
         </div>
 

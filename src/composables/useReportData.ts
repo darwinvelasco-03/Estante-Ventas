@@ -2,6 +2,8 @@ import { computed, type ComputedRef, type Ref } from 'vue'
 
 import { platform } from '@/config/platform'
 import type { Expense, ExpenseCategory } from '@/types/expense'
+import { orderedTotal } from '@/stores/purchases'
+import type { Purchase } from '@/types/purchase'
 import type { SaleRecord } from '@/types/sale'
 import type { ReportRange } from './useReportPeriod'
 
@@ -10,6 +12,7 @@ export interface DayPoint {
   label: string
   sales: number
   expenses: number
+  purchases: number
 }
 
 export interface ReportSlice {
@@ -28,14 +31,17 @@ export interface TopProduct {
 export interface ReportData {
   sales: SaleRecord[]
   expenses: Expense[]
+  purchases: Purchase[]
   salesTotal: number
   expensesTotal: number
+  purchasesTotal: number
   profit: number
   margin: number
   avgTicket: number
   days: DayPoint[]
   categories: ReportSlice[]
   methods: ReportSlice[]
+  suppliers: ReportSlice[]
   products: TopProduct[]
 }
 
@@ -65,6 +71,7 @@ function buildDays(start: Date, end: Date): DayPoint[] {
         .replace('.', ''),
       sales: 0,
       expenses: 0,
+      purchases: 0,
     })
     cursor.setDate(cursor.getDate() + 1)
   }
@@ -80,6 +87,7 @@ function slices(entries: { label: string; value: number }[], total: number): Rep
 export function useReportData(
   sales: Ref<SaleRecord[]>,
   expenses: Ref<Expense[]>,
+  purchases: Ref<Purchase[]>,
   range: ComputedRef<ReportRange>,
 ): ComputedRef<ReportData> {
   return computed(() => {
@@ -95,10 +103,14 @@ export function useReportData(
     const periodExpenses = expenses.value.filter(
       (expense) => expense.status === 'pagado' && inRange(expense.paidAt ?? expense.date),
     )
+    const periodPurchases = purchases.value.filter(
+      (purchase): purchase is Purchase & { paidAt: string } => inRange(purchase.paidAt),
+    )
 
     const salesTotal = periodSales.reduce((sum, sale) => sum + sale.total, 0)
     const expensesTotal = periodExpenses.reduce((sum, expense) => sum + expense.amount, 0)
-    const profit = salesTotal - expensesTotal
+    const purchasesTotal = periodPurchases.reduce((sum, purchase) => sum + orderedTotal(purchase), 0)
+    const profit = salesTotal - expensesTotal - purchasesTotal
 
     const days = buildDays(range.value.start, range.value.end)
     const byKey = new Map(days.map((day) => [day.key, day]))
@@ -109,6 +121,10 @@ export function useReportData(
     for (const expense of periodExpenses) {
       const day = byKey.get(dayKey(new Date(expense.paidAt ?? expense.date)))
       if (day) day.expenses += expense.amount
+    }
+    for (const purchase of periodPurchases) {
+      const day = byKey.get(dayKey(new Date(purchase.paidAt)))
+      if (day) day.purchases += orderedTotal(purchase)
     }
 
     const categoryTotals = new Map<ExpenseCategory, number>()
@@ -130,6 +146,16 @@ export function useReportData(
         value,
       })),
       salesTotal,
+    )
+
+    const supplierTotals = new Map<string, number>()
+    for (const purchase of periodPurchases) {
+      const label = purchase.supplierName || 'Sin proveedor'
+      supplierTotals.set(label, (supplierTotals.get(label) ?? 0) + orderedTotal(purchase))
+    }
+    const suppliers = slices(
+      [...supplierTotals].map(([label, value]) => ({ label, value })),
+      purchasesTotal,
     )
 
     const productTotals = new Map<string, TopProduct>()
@@ -154,14 +180,17 @@ export function useReportData(
     return {
       sales: periodSales,
       expenses: periodExpenses,
+      purchases: periodPurchases,
       salesTotal,
       expensesTotal,
+      purchasesTotal,
       profit,
       margin: salesTotal > 0 ? (profit / salesTotal) * 100 : 0,
       avgTicket: periodSales.length > 0 ? salesTotal / periodSales.length : 0,
       days,
       categories,
       methods,
+      suppliers,
       products,
     }
   })

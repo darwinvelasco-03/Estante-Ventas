@@ -6,7 +6,7 @@ const props = withDefaults(
   defineProps<{
     title: string
     slices: ReportSlice[]
-    accent?: 'ink' | 'mustard'
+    accent?: 'ink' | 'mustard' | 'brick'
     emptyMessage?: string
   }>(),
   { accent: 'ink', emptyMessage: 'Sin datos en este periodo.' },
@@ -31,7 +31,13 @@ const props = withDefaults(
           <div class="h-1.5 flex-1 overflow-hidden rounded-full bg-rail/70">
             <div
               class="h-full rounded-full transition-[width] duration-300"
-              :class="props.accent === 'mustard' ? 'bg-mustard' : 'bg-ink'"
+              :class="
+                props.accent === 'mustard'
+                  ? 'bg-mustard'
+                  : props.accent === 'brick'
+                    ? 'bg-brick'
+                    : 'bg-ink'
+              "
               :style="{ width: `${Math.max(2, slice.share)}%` }"
             />
           </div>

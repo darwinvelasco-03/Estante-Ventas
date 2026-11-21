@@ -11,6 +11,7 @@ import { usePurchaseFilters, type PurchaseFilter } from '@/composables/usePurcha
 import { isAllBranches } from '@/stores/branch'
 import {
   findPurchase,
+  markPurchasePaid,
   purchases,
   receivePurchase,
   removePurchase,
@@ -90,6 +91,22 @@ function onSave(input: PurchaseInput, id: string | null) {
   }
 }
 
+function onPay(id: string) {
+  if (isAllBranches.value) return
+  const result = markPurchasePaid(id)
+  if (result.error || !result.purchase) {
+    notice.value = {
+      text: `No pudimos registrar el pago. ${errorText[result.error ?? 'no-encontrado']}`,
+      tone: 'error',
+    }
+    return
+  }
+  notice.value = {
+    text: `Orden ${result.purchase.folio} pagada en ${result.purchase.paymentMethod === 'efectivo' ? 'efectivo' : 'tarjeta'}. Ya aparece en Caja y Reportes.`,
+    tone: 'ok',
+  }
+}
+
 function onReceive(id: string, quantities: Record<string, number>) {
   if (isAllBranches.value) return
   const result = receivePurchase(id, quantities)
@@ -125,6 +142,7 @@ const errorText: Record<PurchaseError, string> = {
   costo: 'Revisa los costos unitarios.',
   'no-encontrado': 'La orden ya no existe.',
   recibida: 'Una orden recibida no se puede modificar.',
+  pagada: 'Esta orden ya está pagada.',
 }
 </script>
 
@@ -229,6 +247,7 @@ const errorText: Record<PurchaseError, string> = {
           :purchase="selected"
           :readonly="isAllBranches"
           @edit="openEdit(selected.id)"
+          @pay="onPay(selected.id)"
           @receive="receiveOpen = true"
           @remove="confirmOpen = true"
         />

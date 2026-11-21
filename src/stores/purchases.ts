@@ -6,12 +6,17 @@ import { branchId, isAllBranches, writableBranch } from '@/stores/branch'
 import { findProduct } from '@/stores/catalog'
 import { registerMovement } from '@/stores/inventory'
 import { findSupplier } from '@/stores/suppliers'
+import type { PaymentMethod } from '@/types/pos'
 import type { Purchase, PurchaseError, PurchaseInput, PurchaseLine, PurchaseStatus } from '@/types/purchase'
 
 const STORAGE_KEY = 'estante.purchases.v1'
 
 function daysAgo(days: number) {
   return new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
+}
+
+function hoursAgo(hours: number) {
+  return new Date(Date.now() - hours * 60 * 60 * 1000).toISOString()
 }
 
 function seed(): Purchase[] {
@@ -24,6 +29,8 @@ function seed(): Purchase[] {
       currency: 'USD',
       createdAt: daysAgo(2),
       receivedAt: null,
+      paymentMethod: 'efectivo',
+      paidAt: null,
       note: 'Reposición semanal. Confirmar precio de la harina.',
       lines: [
         { id: 'l01', productId: 'p01', name: 'Harina de trigo 1 kg', sku: 'HAR-001', unit: 'und', ordered: 20, received: 12, unitCost: 19.5 },
@@ -40,6 +47,8 @@ function seed(): Purchase[] {
       currency: 'COP',
       createdAt: daysAgo(3),
       receivedAt: null,
+      paymentMethod: 'efectivo',
+      paidAt: hoursAgo(2),
       note: 'Pedido la noche anterior.',
       lines: [
         { id: 'l05', productId: 'p06', name: 'Leche entera 1 L', sku: 'LEC-011', unit: 'und', ordered: 24, received: 12, unitCost: 0.4625 },
@@ -54,6 +63,8 @@ function seed(): Purchase[] {
       currency: 'CRC',
       createdAt: daysAgo(6),
       receivedAt: daysAgo(5),
+      paymentMethod: 'efectivo',
+      paidAt: daysAgo(5),
       note: 'Entrega diaria.',
       lines: [
         { id: 'l07', productId: 'p09', name: 'Pan de caja 500 g', sku: 'PAN-020', unit: 'und', ordered: 30, received: 30, unitCost: 2.9 },
@@ -68,6 +79,8 @@ function seed(): Purchase[] {
       currency: 'USD',
       createdAt: daysAgo(8),
       receivedAt: daysAgo(7),
+      paymentMethod: 'tarjeta',
+      paidAt: daysAgo(7),
       note: 'Maneja regreso de botella.',
       lines: [
         { id: 'l09', productId: 'p15', name: 'Agua natural 1 L', sku: 'AGU-023', unit: 'und', ordered: 40, received: 40, unitCost: 9.5 },
@@ -114,6 +127,15 @@ function isPurchase(value: unknown): value is Purchase {
   )
 }
 
+/** Las órdenes guardadas antes del pago se tratan como no pagadas. */
+function normalize(value: Purchase): Purchase {
+  return {
+    ...value,
+    paymentMethod: value.paymentMethod === 'tarjeta' ? 'tarjeta' : 'efectivo',
+    paidAt: typeof value.paidAt === 'string' ? value.paidAt : null,
+  }
+}
+
 function loadBranch(key: BranchKey): Purchase[] {
   try {
     const raw =
@@ -121,7 +143,7 @@ function loadBranch(key: BranchKey): Purchase[] {
       (key === 'centro' ? window.localStorage.getItem(STORAGE_KEY) : null)
     if (raw) {
       const parsed: unknown = JSON.parse(raw)
-      if (Array.isArray(parsed) && parsed.every(isPurchase)) return parsed
+      if (Array.isArray(parsed) && parsed.every(isPurchase)) return parsed.map(normalize)
     }
   } catch {
     // Órdenes de ejemplo si el almacenamiento no está disponible.
@@ -144,6 +166,11 @@ export const purchases = computed(() => {
 export function findPurchase(id: string | null) {
   if (!id) return null
   return [...state.byBranch.centro, ...state.byBranch.norte].find((purchase) => purchase.id === id) ?? null
+}
+
+/** Órdenes pagadas de una sucursal, para Caja y Reportes. */
+export function paidPurchasesFor(key: BranchKey): Purchase[] {
+  return state.byBranch[key].filter((purchase) => !!purchase.paidAt)
 }
 
 function findIn(key: BranchKey, id: string | null | undefined) {
@@ -232,6 +259,9 @@ export function savePurchase(
     currency: input.currency as CurrencyCode,
     createdAt: existing?.createdAt ?? new Date().toISOString(),
     receivedAt: null,
+    paymentMethod: input.paymentMethod,
+    // Editar una orden pagada conserva la fecha original; desmarcarla la anula.
+    paidAt: input.paid ? (existing?.paidAt ?? new Date().toISOString()) : null,
     note: input.note.trim(),
     lines,
   }
@@ -241,6 +271,22 @@ export function savePurchase(
   } else {
     state.byBranch[key].push(purchase)
   }
+  persist(key)
+  return { purchase }
+}
+
+/** Registra el cobro de una orden con la forma de pago ya capturada en ella. */
+export function markPurchasePaid(
+  id: string,
+  paymentMethod?: PaymentMethod,
+): { purchase: Purchase | null; error?: PurchaseError } {
+  const key = writableBranch()
+  if (!key) return { purchase: null, error: 'no-encontrado' }
+  const purchase = findIn(key, id)
+  if (!purchase) return { purchase: null, error: 'no-encontrado' }
+  if (purchase.paidAt) return { purchase: null, error: 'pagada' }
+  purchase.paymentMethod = paymentMethod ?? purchase.paymentMethod
+  purchase.paidAt = new Date().toISOString()
   persist(key)
   return { purchase }
 }

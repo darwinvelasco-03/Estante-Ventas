@@ -42,9 +42,10 @@ La moneda y el idioma se configuran en `src/config/platform.ts`.
 
 El estado se guarda en `localStorage` con claves por sucursal (`:centro` / `:norte`). «Todas las sucursales» es una vista agregada de solo lectura. Todos los importes se guardan en USD y se convierten al mostrarlos o capturarlos (USD, COP y CRC). Las cuentas y la sesión activa viven en `estante.users.v1` y `estante.session.v1`; las empresas en `estante.companies.v1` y las fichas de sucursal en `estante.branchProfiles.v1`.
 
+- **Compras**: órdenes con folio `OC-xxxx`, recepción parcial en Inventario, forma de pago (efectivo o tarjeta) y fecha de pago. Una orden se puede pagar al crearla o después con **Marcar como pagada**; las órdenes pagadas se contabilizan como egreso por el total pedido. Las órdenes antiguas sin fecha de pago se consideran no pagadas hasta que se marquen.
 - **Gastos**: alta, edición, pago y baja, con folio `G-xxxx` y categorías.
-- **Caja**: sesiones con fondo inicial, arqueo y descuadre; los cobros y gastos pagados en efectivo se asocian por hora.
-- **Reportes**: filtro de periodo, ventas, gastos, utilidad, desgloses y exportación CSV.
+- **Caja**: sesiones con fondo inicial, arqueo y descuadre; los cobros, gastos y compras pagados en efectivo se asocian por hora. El efectivo esperado es `fondo + ventas en efectivo − gastos en efectivo − compras en efectivo`.
+- **Reportes**: filtro de periodo, ventas, gastos, compras pagadas, utilidad, desgloses (incluido compras por proveedor) y exportación CSV. Solo cuentan los gastos y las órdenes marcados como pagados; la utilidad resta ambos egresos de los cobros.
 
 ## Empresas y sucursales
 

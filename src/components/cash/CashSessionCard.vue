@@ -22,7 +22,7 @@ const emit = defineEmits<{ close: [] }>()
       <StatusTag tone="ok" label="Caja abierta" />
     </div>
 
-    <div class="grid grid-cols-2 gap-px bg-rail sm:grid-cols-3 xl:grid-cols-5">
+    <div class="grid grid-cols-2 gap-px bg-rail sm:grid-cols-3 xl:grid-cols-6">
       <div class="bg-surface px-4 py-3.5">
         <p class="text-[11px] text-ink-soft">Fondo inicial</p>
         <p class="tnum mt-1 text-sm font-semibold text-ink">
@@ -51,6 +51,16 @@ const emit = defineEmits<{ close: [] }>()
           -{{ formatCurrency(props.summary.cashExpenseTotal, 2) }}
         </p>
       </div>
+      <div class="bg-surface px-4 py-3.5">
+        <p class="text-[11px] text-ink-soft">Compras en efectivo</p>
+        <p class="tnum mt-1 text-sm font-semibold text-brick">
+          -{{ formatCurrency(props.summary.cashPurchaseTotal, 2) }}
+        </p>
+        <p class="tnum mt-0.5 text-[11px] text-ink-soft">
+          {{ props.summary.cashPurchases.length }}
+          {{ props.summary.cashPurchases.length === 1 ? 'orden pagada' : 'órdenes pagadas' }}
+        </p>
+      </div>
       <div class="bg-mustard-soft px-4 py-3.5">
         <p class="text-[11px] text-mustard">Efectivo esperado</p>
         <p class="tnum mt-1 font-display text-lg font-semibold text-ink">
@@ -62,7 +72,7 @@ const emit = defineEmits<{ close: [] }>()
     <div class="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
       <p class="flex items-start gap-1.5 text-xs text-ink-soft">
         <AppIcon name="clock" :size="14" class="mt-px shrink-0" />
-        Los cobros y gastos pagados se asocian automáticamente según su hora.
+        Los cobros, gastos y compras pagadas se asocian automáticamente según su hora.
       </p>
       <button
         type="button"
